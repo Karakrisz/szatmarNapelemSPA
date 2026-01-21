@@ -192,16 +192,16 @@
         <!-- 3 KIEMELT ÉRVELÉS -->
         <div class="benefits-grid">
           <div class="benefit-card">
-            <h3>🔋 Állami Támogatás – OETP Program</h3>
+            <h3>🔋 Vissza nem térítendő állami támogatás</h3>
             <p>
               <strong>Az Otthoni Energiatárolás Program mostanra elindult.</strong>
-              Azok a háztartások, amelyek rendelkeznek napelemes rendszerrel vagy vállalják annak telepítését, pályázhatnak az energiatárolásra. A kiírás egyszerű: 2,5 oldalas formanyomtatvány. Részletekről beszélgessünk.
+              Azok a háztartások, amelyek rendelkeznek napelemes rendszerrel vagy vállalják annak telepítését, pályázhatnak az energiatárolásra. A kiírás egyszerű: mindent mi intézünk Ön helyett. 
             </p>
           </div>
           <div class="benefit-card">
             <h3>🔌 Napelem + Akkumulátor = Energiafüggetlenség</h3>
             <p>
-              <strong>Az energiatárolás критична az igazi megtakarításhoz.</strong>
+              <strong>Az energiatárolás az igazi megtakarításhoz.</strong>
               Nem csak termelni kell, hanem tárolni is az áramot. Éjszaka is van energia, amikor szüksége van rá. A bruttóelszámolás miatt különösen értékes a накопитель.
             </p>
           </div>
