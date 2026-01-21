@@ -1,0 +1,282 @@
+{
+  "resolvedId": "/Applications/XAMPP/xamppfiles/htdocs/biztosAlkuszApp/pages/index.vue?macro=true",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "<template>\n  <div>\n    <section>\n      <div class=\"slider-content\">\n        <img\n          class=\"slider-content__img\"\n          src=\"/img/slider/slider.webp\"\n          alt=\"Biztos Alkuszom\"\n        />\n      </div>\n    </section>\n\n    <section>\n      <div class=\"partners-content\">\n        <div class=\"page__header\">\n          <h2 class=\"page__header__h2 text-color-w text-transform-uppercase\">\n            Partnerek\n          </h2>\n        </div>\n\n        <div class=\"partners-content__img-box grid-7\">\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners2.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners3.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners4.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners5.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners6.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners7.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n        </div>\n\n        <div class=\"partners-content__img-box grid-7\">\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners8.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners9.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners10.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners11.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners12.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners13.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners14.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n        </div>\n      </div>\n    </section>\n\n    <section>\n      <div class=\"services-content position-relative\">\n        <div class=\"page__header page__header--right\">\n          <h3 class=\"page__header__h3 text-color-w text-transform-uppercase\">\n            SZOLGÁLTATÁSOK\n          </h3>\n        </div>\n\n        <div class=\"servive-grid servive-grid--margin-bottom grid-3\">\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/gepjarmubiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Gépjármű biztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                Nyugodt utazást és védelmet nyújt minden kilométeren,\n                balesetektől kezdve a váratlan meghibásodásokig.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/utazasbiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                UTASbiztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                A gondtalan kalandok záloga, amely biztonságot nyújt a világ\n                bármely pontján, legyen szó váratlan eseményekről vagy\n                egészségügyi sürgősségekről.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/gepjarmubiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Gépjármű biztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                A tanulóbiztosítás biztos háttér a diákok számára, hogy\n                nyugodtan összpontosíthassanak tanulmányaikra, miközben\n                védelemben részesülnek az élet váratlan eseményei ellen.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n        </div>\n\n        <div class=\"servive-grid grid-3\">\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/rendezveny_biztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                RENDEZVÉNYSZOLGÁLAT\n              </h3>\n              <p class=\"service-box__description\">\n                Biztosításaink magukban foglalják a felelősségbiztosítást, a\n                rendezvény helyszínének védelmét, valamint az egyedi igényekhez\n                igazodó kockázatkezelést, biztosítva ezzel a rendezvény\n                zavartalan lebonyolítását..\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/karbejelentes.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Kárbejelentés\n              </h3>\n              <p class=\"service-box__description\">\n                A kárbejelentési folyamatunk során a biztosítási alkusz\n                szakértői segítséget és támogatást nyújtanak az ügyfeleknek,\n                hogy a kárbejelentés gyorsan és zökkenőmentesen történjen.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/szemelyes_tanacsadas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Személyes tanácsadás\n              </h3>\n              <p class=\"service-box__description\">\n                személyre szabott tanácsadásunkkal biztosítjuk, hogy minden\n                ügyfél megkapja az egyéni igényeinek megfelelő biztosítási\n                tanácsokat és megoldásokat, biztosítva ezzel az optimális\n                védelmet és nyugalmat.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"service-bottom position-relative\">\n        <img\n          class=\"service-bottom__img\"\n          src=\"/img/partners/bottom.svg\"\n          alt=\"Biztos Alkuszom\"\n        />\n        <div class=\"service-bottom__box position-absolute bg-color-w\">\n          <h4 class=\"service-bottom__box__title linear-font\">\n            \"Nálunk a biztosítás <br />\n            találkozik a bizalommal.\"\n          </h4>\n        </div>\n      </div>\n    </section>\n    <section>\n      <div class=\"blog-content\">\n        <div class=\"page__header page__header--margin-top\">\n          <h2 class=\"page__header__h2 text-color-w text-transform-uppercase\">\n            Blog\n          </h2>\n        </div>\n        <div class=\"blog-grid grid-3\">\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Az Ön Teljes Útmutatója a Lakásbiztosítás Világában\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Fedezze fel, hogyan válassza ki a legmegfelelőbb\n                lakásbiztosítást életstílusához és igényeihez, miközben\n                megismeri a fedezetek és kedvezmények titkait.\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog1.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Vállalkozók Biztosítási Kalauza: Hogyan Védje Meg Cégét\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Fedezze fel, hogyan válassza ki a legmegfelelőbb\n                lakásbiztosítást életstílusához és igényeihez, miközben\n                megismeri a fedezetek és kedvezmények titkait.\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog3.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Utazási Biztosítás: Miért Nélkülözhetetlen Minden Külföldi Út\n                Során\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Ismerje meg az utazási biztosítás jelentőségét\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n    </section>\n  </div>\n</template>\n",
+      "start": 1713536988027,
+      "end": 1713536988236,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "server-only-component-transform",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1713536988236,
+      "end": 1713536988236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "result": "const _sfc_main = {}\nimport { resolveComponent as _resolveComponent, withCtx as _withCtx, createTextVNode as _createTextVNode } from \"vue\"\nimport { ssrRenderAttr as _ssrRenderAttr, ssrRenderComponent as _ssrRenderComponent, ssrRenderAttrs as _ssrRenderAttrs } from \"vue/server-renderer\"\nimport _imports_0 from '/img/slider/slider.webp'\nimport _imports_1 from '/img/partners/partners.svg'\nimport _imports_2 from '/img/partners/partners2.svg'\nimport _imports_3 from '/img/partners/partners3.svg'\nimport _imports_4 from '/img/partners/partners4.svg'\nimport _imports_5 from '/img/partners/partners5.svg'\nimport _imports_6 from '/img/partners/partners6.svg'\nimport _imports_7 from '/img/partners/partners7.svg'\nimport _imports_8 from '/img/partners/partners8.svg'\nimport _imports_9 from '/img/partners/partners9.svg'\nimport _imports_10 from '/img/partners/partners10.svg'\nimport _imports_11 from '/img/partners/partners11.svg'\nimport _imports_12 from '/img/partners/partners12.svg'\nimport _imports_13 from '/img/partners/partners13.svg'\nimport _imports_14 from '/img/partners/partners14.svg'\nimport _imports_15 from '/img/services/gepjarmubiztositas.svg'\nimport _imports_16 from '/img/partners/right-arrow.svg'\nimport _imports_17 from '/img/services/utazasbiztositas.svg'\nimport _imports_18 from '/img/services/rendezveny_biztositas.svg'\nimport _imports_19 from '/img/services/karbejelentes.svg'\nimport _imports_20 from '/img/services/szemelyes_tanacsadas.svg'\nimport _imports_21 from '/img/partners/bottom.svg'\nimport _imports_22 from '/img/blog/blog.svg'\nimport _imports_23 from '/img/blog/blog1.svg'\nimport _imports_24 from '/img/blog/blog3.svg'\n\n\nfunction _sfc_ssrRender(_ctx, _push, _parent, _attrs) {\n  const _component_NuxtLink = _resolveComponent(\"NuxtLink\")\n\n  _push(`<div${\n    _ssrRenderAttrs(_attrs)\n  }><section><div class=\"slider-content\"><img class=\"slider-content__img\"${\n    _ssrRenderAttr(\"src\", _imports_0)\n  } alt=\"Biztos Alkuszom\"></div></section><section><div class=\"partners-content\"><div class=\"page__header\"><h2 class=\"page__header__h2 text-color-w text-transform-uppercase\"> Partnerek </h2></div><div class=\"partners-content__img-box grid-7\"><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_1)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_2)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_3)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_4)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_5)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_6)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_7)\n  } alt=\"Biztos Alkuszom\"></div></div><div class=\"partners-content__img-box grid-7\"><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_8)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_9)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_10)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_11)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_12)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_13)\n  } alt=\"Biztos Alkuszom\"></div><div class=\"partners-content__img-box__div text-center\"><img class=\"partners-content__img-box__div__img\"${\n    _ssrRenderAttr(\"src\", _imports_14)\n  } alt=\"Biztos Alkuszom\"></div></div></div></section><section><div class=\"services-content position-relative\"><div class=\"page__header page__header--right\"><h3 class=\"page__header__h3 text-color-w text-transform-uppercase\"> SZOLGÁLTATÁSOK </h3></div><div class=\"servive-grid servive-grid--margin-bottom grid-3\"><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_15)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> Gépjármű biztosítás </h3><p class=\"service-box__description\"> Nyugodt utazást és védelmet nyújt minden kilométeren, balesetektől kezdve a váratlan meghibásodásokig. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_17)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> UTASbiztosítás </h3><p class=\"service-box__description\"> A gondtalan kalandok záloga, amely biztonságot nyújt a világ bármely pontján, legyen szó váratlan eseményekről vagy egészségügyi sürgősségekről. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_15)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> Gépjármű biztosítás </h3><p class=\"service-box__description\"> A tanulóbiztosítás biztos háttér a diákok számára, hogy nyugodtan összpontosíthassanak tanulmányaikra, miközben védelemben részesülnek az élet váratlan eseményei ellen. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div></div><div class=\"servive-grid grid-3\"><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_18)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> RENDEZVÉNYSZOLGÁLAT </h3><p class=\"service-box__description\"> Biztosításaink magukban foglalják a felelősségbiztosítást, a rendezvény helyszínének védelmét, valamint az egyedi igényekhez igazodó kockázatkezelést, biztosítva ezzel a rendezvény zavartalan lebonyolítását.. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_19)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> Kárbejelentés </h3><p class=\"service-box__description\"> A kárbejelentési folyamatunk során a biztosítási alkusz szakértői segítséget és támogatást nyújtanak az ügyfeleknek, hogy a kárbejelentés gyorsan és zökkenőmentesen történjen. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div><div class=\"service-box bg-color-w position-relative\"><img class=\"service-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_20)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-box__text\"><h3 class=\"service-box__title text-transform-uppercase text-center\"> Személyes tanácsadás </h3><p class=\"service-box__description\"> személyre szabott tanácsadásunkkal biztosítjuk, hogy minden ügyfél megkapja az egyéni igényeinek megfelelő biztosítási tanácsokat és megoldásokat, biztosítva ezzel az optimális védelmet és nyugalmat. </p></div><div class=\"service-box__link-box position-absolute\"><a class=\"page-link text-color-w\" href=\"#\">Tovább <img class=\"page-link__img position-relative\"${\n    _ssrRenderAttr(\"src\", _imports_16)\n  } alt=\"Biztos Alkuszom\"></a></div></div></div></div><div class=\"service-bottom position-relative\"><img class=\"service-bottom__img\"${\n    _ssrRenderAttr(\"src\", _imports_21)\n  } alt=\"Biztos Alkuszom\"><div class=\"service-bottom__box position-absolute bg-color-w\"><h4 class=\"service-bottom__box__title linear-font\"> &quot;Nálunk a biztosítás <br> találkozik a bizalommal.&quot; </h4></div></div></section><section><div class=\"blog-content\"><div class=\"page__header page__header--margin-top\"><h2 class=\"page__header__h2 text-color-w text-transform-uppercase\"> Blog </h2></div><div class=\"blog-grid grid-3\"><div class=\"blog-box\"><img class=\"blog-box__img\"${\n    _ssrRenderAttr(\"src\", _imports_22)\n  } alt=\"Biztos Alkuszom\"><div class=\"blog-box__text position-relative\"><h3 class=\"blog-box__text__h3 text-transform-uppercase\"> Az Ön Teljes Útmutatója a Lakásbiztosítás Világában </h3><p class=\"blog-box__text__p\"> Fedezze fel, hogyan válassza ki a legmegfelelőbb lakásbiztosítást életstílusához és igényeihez, miközben megismeri a fedezetek és kedvezmények titkait. </p><div class=\"blog-box__link-box position-absolute\">`)\n  _push(_ssrRenderComponent(_component_NuxtLink, {\n    class: \"blog-box__link-box__Nuxtlink\",\n    to: \"/\"\n  }, {\n    default: _withCtx((_, _push, _parent, _scopeId) => {\n      if (_push) {\n        _push(`Elolvasom a cikket`)\n      } else {\n        return [\n          _createTextVNode(\"Elolvasom a cikket\")\n        ]\n      }\n    }),\n    _: 1\n  }, _parent))\n  _push(`</div></div></div><div class=\"blog-box\"><img class=\"blog-box__img\"${_ssrRenderAttr(\"src\", _imports_23)} alt=\"Biztos Alkuszom\"><div class=\"blog-box__text position-relative\"><h3 class=\"blog-box__text__h3 text-transform-uppercase\"> Vállalkozók Biztosítási Kalauza: Hogyan Védje Meg Cégét </h3><p class=\"blog-box__text__p\"> Fedezze fel, hogyan válassza ki a legmegfelelőbb lakásbiztosítást életstílusához és igényeihez, miközben megismeri a fedezetek és kedvezmények titkait. </p><div class=\"blog-box__link-box position-absolute\">`)\n  _push(_ssrRenderComponent(_component_NuxtLink, {\n    class: \"blog-box__link-box__Nuxtlink\",\n    to: \"/\"\n  }, {\n    default: _withCtx((_, _push, _parent, _scopeId) => {\n      if (_push) {\n        _push(`Elolvasom a cikket`)\n      } else {\n        return [\n          _createTextVNode(\"Elolvasom a cikket\")\n        ]\n      }\n    }),\n    _: 1\n  }, _parent))\n  _push(`</div></div></div><div class=\"blog-box\"><img class=\"blog-box__img\"${_ssrRenderAttr(\"src\", _imports_24)} alt=\"Biztos Alkuszom\"><div class=\"blog-box__text position-relative\"><h3 class=\"blog-box__text__h3 text-transform-uppercase\"> Utazási Biztosítás: Miért Nélkülözhetetlen Minden Külföldi Út Során </h3><p class=\"blog-box__text__p\"> Ismerje meg az utazási biztosítás jelentőségét </p><div class=\"blog-box__link-box position-absolute\">`)\n  _push(_ssrRenderComponent(_component_NuxtLink, {\n    class: \"blog-box__link-box__Nuxtlink\",\n    to: \"/\"\n  }, {\n    default: _withCtx((_, _push, _parent, _scopeId) => {\n      if (_push) {\n        _push(`Elolvasom a cikket`)\n      } else {\n        return [\n          _createTextVNode(\"Elolvasom a cikket\")\n        ]\n      }\n    }),\n    _: 1\n  }, _parent))\n  _push(`</div></div></div></div></div></section></div>`)\n}\n\n\nimport { useSSRContext as __vite_useSSRContext } from 'vue'\nconst _sfc_setup = _sfc_main.setup\n_sfc_main.setup = (props, ctx) => {\n  const ssrContext = __vite_useSSRContext()\n  ;(ssrContext.modules || (ssrContext.modules = new Set())).add(\"pages/index.vue\")\n  return _sfc_setup ? _sfc_setup(props, ctx) : undefined\n}\nimport _export_sfc from '\u0000plugin-vue:export-helper'\nexport default /*#__PURE__*/_export_sfc(_sfc_main, [['ssrRender',_sfc_ssrRender]])",
+      "start": 1713536988236,
+      "end": 1713536988239,
+      "order": "normal",
+      "sourcemaps": {
+        "version": 3,
+        "sources": [
+          "/Applications/XAMPP/xamppfiles/htdocs/biztosAlkuszApp/pages/index.vue"
+        ],
+        "names": [],
+        "mappings": ";;OAMU,UAA6B;OAkBzB,UAAgC;OAQhC,UAAiC;OAQjC,UAAiC;OAQjC,UAAiC;OAQjC,UAAiC;OAQjC,UAAiC;OAQjC,UAAiC;OAUjC,UAAiC;OAQjC,UAAiC;OAQjC,WAAkC;OAQlC,WAAkC;OAQlC,WAAkC;OAQlC,WAAkC;OAQlC,WAAkC;OAoBlC,WAA0C;OAmBtC,WAAmC;OAUvC,WAAwC;OA8DxC,WAA6C;OA+B7C,WAAqC;OA8BrC,WAA4C;OAiChD,WAA8B;OAsB1B,WAAwB;OAsBxB,WAAyB;OAsBzB,WAAyB;;;;;;EAjZvC;IAAA,gBAAA;;IAAA,eAMU,KAA6B,EAA7B,UAA6B;;IANvC,eAwBc,KAAgC,EAAhC,UAAgC;;IAxB9C,eAgCc,KAAiC,EAAjC,UAAiC;;IAhC/C,eAwCc,KAAiC,EAAjC,UAAiC;;IAxC/C,eAgDc,KAAiC,EAAjC,UAAiC;;IAhD/C,eAwDc,KAAiC,EAAjC,UAAiC;;IAxD/C,eAgEc,KAAiC,EAAjC,UAAiC;;IAhE/C,eAwEc,KAAiC,EAAjC,UAAiC;;IAxE/C,eAkFc,KAAiC,EAAjC,UAAiC;;IAlF/C,eA0Fc,KAAiC,EAAjC,UAAiC;;IA1F/C,eAkGc,KAAkC,EAAlC,WAAkC;;IAlGhD,eA0Gc,KAAkC,EAAlC,WAAkC;;IA1GhD,eAkHc,KAAkC,EAAlC,WAAkC;;IAlHhD,eA0Hc,KAAkC,EAAlC,WAAkC;;IA1HhD,eAkIc,KAAkC,EAAlC,WAAkC;;IAlIhD,eAsJc,KAA0C,EAA1C,WAA0C;;IAtJxD,eAyKkB,KAAmC,EAAnC,WAAmC;;IAzKrD,eAmLc,KAAwC,EAAxC,WAAwC;;IAnLtD,eAuMkB,KAAmC,EA9BnC,WAAmC;;IAzKrD,eAiNc,KAA0C,EA3D1C,WAA0C;;IAtJxD,eAqOkB,KAAmC,EA5DnC,WAAmC;;IAzKrD,eAiPc,KAA6C,EAA7C,WAA6C;;IAjP3D,eAsQkB,KAAmC,EA7FnC,WAAmC;;IAzKrD,eAgRc,KAAqC,EAArC,WAAqC;;IAhRnD,eAoSkB,KAAmC,EA3HnC,WAAmC;;IAzKrD,eA8Sc,KAA4C,EAA5C,WAA4C;;IA9S1D,eAmUkB,KAAmC,EA1JnC,WAAmC;;IAzKrD,eA+UU,KAA8B,EAA9B,WAA8B;;IA/UxC,eAqWc,KAAwB,EAAxB,WAAwB;;EArWtC,MAAA;IAkX0B,KAAK,EAAC,8BAA8B;IAAC,EAAE,EAAC,GAAG;;IAlXrE,kBAkXgB,CAEhB;UApXA;QAAA;;;UAAA,iBAmXmB,oBAAkB;;;;IAnXrC,GAAA;;EAAA,2EAAA,eA2Xc,KAAyB,EAAzB,WAAyB;EA3XvC,MAAA;IAwY0B,KAAK,EAAC,8BAA8B;IAAC,EAAE,EAAC,GAAG;;IAxYrE,kBAwYgB,CAEhB;UA1YA;QAAA;;;UAAA,iBAyYmB,oBAAkB;;;;IAzYrC,GAAA;;EAAA,2EAAA,eAiZc,KAAyB,EAAzB,WAAyB;EAjZvC,MAAA;IA6Z0B,KAAK,EAAC,8BAA8B;IAAC,EAAE,EAAC,GAAG;;IA7ZrE,kBA6ZgB,CAEhB;UA/ZA;QAAA;;;UAAA,iBA8ZmB,oBAAkB;;;;IA9ZrC,GAAA;;EAAA",
+        "sourcesContent": [
+          "<template>\n  <div>\n    <section>\n      <div class=\"slider-content\">\n        <img\n          class=\"slider-content__img\"\n          src=\"/img/slider/slider.webp\"\n          alt=\"Biztos Alkuszom\"\n        />\n      </div>\n    </section>\n\n    <section>\n      <div class=\"partners-content\">\n        <div class=\"page__header\">\n          <h2 class=\"page__header__h2 text-color-w text-transform-uppercase\">\n            Partnerek\n          </h2>\n        </div>\n\n        <div class=\"partners-content__img-box grid-7\">\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners2.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners3.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners4.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners5.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners6.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners7.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n        </div>\n\n        <div class=\"partners-content__img-box grid-7\">\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners8.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners9.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners10.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners11.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners12.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners13.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n\n          <div class=\"partners-content__img-box__div text-center\">\n            <img\n              class=\"partners-content__img-box__div__img\"\n              src=\"/img/partners/partners14.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n          </div>\n        </div>\n      </div>\n    </section>\n\n    <section>\n      <div class=\"services-content position-relative\">\n        <div class=\"page__header page__header--right\">\n          <h3 class=\"page__header__h3 text-color-w text-transform-uppercase\">\n            SZOLGÁLTATÁSOK\n          </h3>\n        </div>\n\n        <div class=\"servive-grid servive-grid--margin-bottom grid-3\">\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/gepjarmubiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Gépjármű biztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                Nyugodt utazást és védelmet nyújt minden kilométeren,\n                balesetektől kezdve a váratlan meghibásodásokig.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/utazasbiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                UTASbiztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                A gondtalan kalandok záloga, amely biztonságot nyújt a világ\n                bármely pontján, legyen szó váratlan eseményekről vagy\n                egészségügyi sürgősségekről.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/gepjarmubiztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Gépjármű biztosítás\n              </h3>\n              <p class=\"service-box__description\">\n                A tanulóbiztosítás biztos háttér a diákok számára, hogy\n                nyugodtan összpontosíthassanak tanulmányaikra, miközben\n                védelemben részesülnek az élet váratlan eseményei ellen.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n        </div>\n\n        <div class=\"servive-grid grid-3\">\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/rendezveny_biztositas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                RENDEZVÉNYSZOLGÁLAT\n              </h3>\n              <p class=\"service-box__description\">\n                Biztosításaink magukban foglalják a felelősségbiztosítást, a\n                rendezvény helyszínének védelmét, valamint az egyedi igényekhez\n                igazodó kockázatkezelést, biztosítva ezzel a rendezvény\n                zavartalan lebonyolítását..\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/karbejelentes.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Kárbejelentés\n              </h3>\n              <p class=\"service-box__description\">\n                A kárbejelentési folyamatunk során a biztosítási alkusz\n                szakértői segítséget és támogatást nyújtanak az ügyfeleknek,\n                hogy a kárbejelentés gyorsan és zökkenőmentesen történjen.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n\n          <div class=\"service-box bg-color-w position-relative\">\n            <img\n              class=\"service-box__img\"\n              src=\"/img/services/szemelyes_tanacsadas.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"service-box__text\">\n              <h3\n                class=\"service-box__title text-transform-uppercase text-center\"\n              >\n                Személyes tanácsadás\n              </h3>\n              <p class=\"service-box__description\">\n                személyre szabott tanácsadásunkkal biztosítjuk, hogy minden\n                ügyfél megkapja az egyéni igényeinek megfelelő biztosítási\n                tanácsokat és megoldásokat, biztosítva ezzel az optimális\n                védelmet és nyugalmat.\n              </p>\n            </div>\n            <div class=\"service-box__link-box position-absolute\">\n              <a class=\"page-link text-color-w\" href=\"#\"\n                >Tovább\n                <img\n                  class=\"page-link__img position-relative\"\n                  src=\"/img/partners/right-arrow.svg\"\n                  alt=\"Biztos Alkuszom\"\n                />\n              </a>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"service-bottom position-relative\">\n        <img\n          class=\"service-bottom__img\"\n          src=\"/img/partners/bottom.svg\"\n          alt=\"Biztos Alkuszom\"\n        />\n        <div class=\"service-bottom__box position-absolute bg-color-w\">\n          <h4 class=\"service-bottom__box__title linear-font\">\n            \"Nálunk a biztosítás <br />\n            találkozik a bizalommal.\"\n          </h4>\n        </div>\n      </div>\n    </section>\n    <section>\n      <div class=\"blog-content\">\n        <div class=\"page__header page__header--margin-top\">\n          <h2 class=\"page__header__h2 text-color-w text-transform-uppercase\">\n            Blog\n          </h2>\n        </div>\n        <div class=\"blog-grid grid-3\">\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Az Ön Teljes Útmutatója a Lakásbiztosítás Világában\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Fedezze fel, hogyan válassza ki a legmegfelelőbb\n                lakásbiztosítást életstílusához és igényeihez, miközben\n                megismeri a fedezetek és kedvezmények titkait.\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog1.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Vállalkozók Biztosítási Kalauza: Hogyan Védje Meg Cégét\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Fedezze fel, hogyan válassza ki a legmegfelelőbb\n                lakásbiztosítást életstílusához és igényeihez, miközben\n                megismeri a fedezetek és kedvezmények titkait.\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n          <div class=\"blog-box\">\n            <img\n              class=\"blog-box__img\"\n              src=\"/img/blog/blog3.svg\"\n              alt=\"Biztos Alkuszom\"\n            />\n            <div class=\"blog-box__text position-relative\">\n              <h3 class=\"blog-box__text__h3 text-transform-uppercase\">\n                Utazási Biztosítás: Miért Nélkülözhetetlen Minden Külföldi Út\n                Során\n              </h3>\n              <p class=\"blog-box__text__p\">\n                Ismerje meg az utazási biztosítás jelentőségét\n              </p>\n              <div class=\"blog-box__link-box position-absolute\">\n                <NuxtLink class=\"blog-box__link-box__Nuxtlink\" to=\"/\"\n                  >Elolvasom a cikket</NuxtLink\n                >\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n    </section>\n  </div>\n</template>\n"
+        ]
+      }
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1713536988239,
+      "end": 1713536988239,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1713536988239,
+      "end": 1713536988241,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1713536988239,
+      "end": 1713536988241,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1713536988241,
+      "end": 1713536988241,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1713536988241,
+      "end": 1713536988241,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "result": "\nconst __nuxt_page_meta = null\nexport default __nuxt_page_meta\n",
+      "start": 1713536988241,
+      "end": 1713536988242,
+      "order": "post",
+      "sourcemaps": {
+        "version": 3,
+        "sources": [
+          ""
+        ],
+        "names": [],
+        "mappings": "AAAA;AAAA;AAAA;"
+      }
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "result": "\nconst __nuxt_page_meta = null\nexport default __nuxt_page_meta\n",
+      "start": 1713536988241,
+      "end": 1713536988242,
+      "order": "post",
+      "sourcemaps": {
+        "version": 3,
+        "sources": [
+          ""
+        ],
+        "names": [],
+        "mappings": "AAAA;AAAA;AAAA;"
+      }
+    },
+    {
+      "name": "nuxt:tree-shake-template",
+      "start": 1713536988242,
+      "end": 1713536988242,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1713536988242,
+      "end": 1713536988242,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1713536988242,
+      "end": 1713536988242,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1713536988242,
+      "end": 1713536988243,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1713536988243,
+      "end": 1713536988243,
+      "order": "normal"
+    }
+  ]
+}
