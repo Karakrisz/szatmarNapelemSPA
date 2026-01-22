@@ -7,7 +7,7 @@ export const useGtagConversion = () => {
         }
       }
       window.gtag('event', 'conversion', {
-        send_to: '',
+        send_to: 'AW-17861229415/Ig-OCNm1muobEOf28sRC',
         event_callback: callback,
       })
     }
@@ -16,3 +16,4 @@ export const useGtagConversion = () => {
 
   return { reportConversion }
 }
+
