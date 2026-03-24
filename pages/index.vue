@@ -1,176 +1,172 @@
 <script setup>
-  import { ref, onMounted } from 'vue'
-  import { useGtagConversion } from '~/composables/useGtagConversion'
-  
-  useHead({
-    title: 'Szatmár Napelemes - Ingyenes Felmérés | Szatmárnapelem',
+import { ref, onMounted } from 'vue'
+import { useGtagConversion } from '~/composables/useGtagConversion'
+
+useHead({
+  title: 'Szatmár Napelemes - Ingyenes Felmérés | Szatmárnapelem',
+})
+
+// ====== GOOGLE ADS TRACKING ======
+function persistClickIdsFromUrl() {
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams(window.location.search)
+  ;['gclid', 'wbraid', 'gbraid'].forEach((key) => {
+    const v = params.get(key)
+    if (v) localStorage.setItem(key, v)
   })
-  
-  // ====== GOOGLE ADS TRACKING ======
-  function persistClickIdsFromUrl() {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    ;['gclid', 'wbraid', 'gbraid'].forEach((key) => {
-      const v = params.get(key)
-      if (v) localStorage.setItem(key, v)
-    })
+}
+
+function getClickIds() {
+  if (typeof window === 'undefined')
+    return { gclid: null, wbraid: null, gbraid: null }
+  return {
+    gclid: localStorage.getItem('gclid'),
+    wbraid: localStorage.getItem('wbraid'),
+    gbraid: localStorage.getItem('gbraid'),
   }
-  
-  function getClickIds() {
-    if (typeof window === 'undefined')
-      return { gclid: null, wbraid: null, gbraid: null }
-    return {
-      gclid: localStorage.getItem('gclid'),
-      wbraid: localStorage.getItem('wbraid'),
-      gbraid: localStorage.getItem('gbraid'),
+}
+
+// Reactive variables
+const isSubmitting = ref(false)
+const submitMessage = ref('')
+const contactMethod = ref('form')
+const formData = ref({
+  financing: '',
+  monthlyBill: '',
+  name: '',
+  email: '',
+  phone: '',
+  message: '',
+})
+
+// ====== FAQ accordion ======
+const faqRefs = ref([])
+
+const handleFaqToggle = (activeIndex) => {
+  const activeEl = faqRefs.value?.[activeIndex]
+  if (!activeEl?.open) return
+
+  faqRefs.value.forEach((el, i) => {
+    if (i !== activeIndex && el?.open) el.open = false
+  })
+}
+
+// Form submission handler
+const submitForm = async (event) => {
+  event.preventDefault()
+
+  if (isSubmitting.value) return
+
+  isSubmitting.value = true
+  submitMessage.value = ''
+
+  try {
+    const webhookUrl =
+      'https://services.leadconnectorhq.com/hooks/bsv1VGpQFCUeEBabknKX/webhook-trigger/30d2cccd-c034-4fe4-94e9-28e75927e7db'
+
+    const { gclid, wbraid, gbraid } = getClickIds()
+
+    const payload = {
+      name: formData.value.name,
+      email: formData.value.email,
+      phone: formData.value.phone,
+      financing: formData.value.financing,
+      monthly_bill: formData.value.monthlyBill,
+      message: formData.value.message,
+      gclid,
+      wbraid,
+      gbraid,
+      source: 'Napelem árajánlatkérési űrlap',
+      form_type: 'solar_panel_inquiry',
+      submission_date: new Date().toISOString(),
+      custom_field_1: 'Napelemes kivitelezés + konzultáció',
+      custom_field_2: formData.value.financing,
+      custom_field_3: formData.value.monthlyBill,
     }
-  }
-  
-  // Reactive variables
-  const isSubmitting = ref(false)
-  const submitMessage = ref('')
-  const contactMethod = ref('form')
-  const formData = ref({
-    serviceType: '',
-    roofType: '',
-    urgency: '',
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    message: '',
-  })
-  
-  // ====== FAQ accordion ======
-  const faqRefs = ref([])
-  
-  const handleFaqToggle = (activeIndex) => {
-    const activeEl = faqRefs.value?.[activeIndex]
-    if (!activeEl?.open) return
-  
-    faqRefs.value.forEach((el, i) => {
-      if (i !== activeIndex && el?.open) el.open = false
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     })
-  }
-  
-  // Form submission handler
-  const submitForm = async (event) => {
-    event.preventDefault()
-  
-    if (isSubmitting.value) return
-  
-    isSubmitting.value = true
-    submitMessage.value = ''
-  
-    try {
-      const webhookUrl =
-        'https://services.leadconnectorhq.com/hooks/bsv1VGpQFCUeEBabknKX/webhook-trigger/30d2cccd-c034-4fe4-94e9-28e75927e7db'
-  
-      const { gclid, wbraid, gbraid } = getClickIds()
-      const serviceName = getServiceDisplayName(formData.value.serviceType)
-  
-      const payload = {
-        name: formData.value.name,
-        email: formData.value.email,
-        phone: formData.value.phone,
-        address: formData.value.address,
-        service_type: formData.value.serviceType,
-        roof_type: formData.value.roofType,
-        urgency: formData.value.urgency,
-        message: formData.value.message,
-        gclid,
-        wbraid,
-        gbraid,
-        source: 'Napelem árajánlatkérési űrlap',
-        form_type: 'solar_panel_inquiry',
-        submission_date: new Date().toISOString(),
-        custom_field_1: serviceName,
-        custom_field_2: formData.value.roofType,
-        custom_field_3: formData.value.urgency,
+
+    if (response.ok) {
+      submitMessage.value =
+        '✅ Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.'
+
+      const { reportConversion } = useGtagConversion()
+      reportConversion()
+
+      formData.value = {
+        financing: '',
+        monthlyBill: '',
+        name: '',
+        email: '',
+        phone: '',
+        message: '',
       }
-  
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-  
-      if (response.ok) {
-        submitMessage.value =
-          '✅ Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.'
-  
-        const { reportConversion } = useGtagConversion()
-        reportConversion()
-  
-        formData.value = {
-          serviceType: '',
-          roofType: '',
-          urgency: '',
-          name: '',
-          email: '',
-          phone: '',
-          address: '',
-          message: '',
-        }
-      } else {
-        throw new Error('Hiba történt a küldés során')
-      }
-    } catch (error) {
-      console.error('Form submission error:', error)
-      submitMessage.value = '❌ Hiba történt. Kérjük próbálja újra, vagy hívjon minket!'
-    } finally {
-      isSubmitting.value = false
+    } else {
+      throw new Error('Hiba történt a küldés során')
     }
+  } catch (error) {
+    console.error('Form submission error:', error)
+    submitMessage.value =
+      '❌ Hiba történt. Kérjük próbálja újra, vagy hívjon minket!'
+  } finally {
+    isSubmitting.value = false
   }
-  
-  const getServiceDisplayName = (serviceValue) => {
-    const serviceMap = {
-      hazasitalis: 'Háztartási napelemes rendszer',
-      nagyobb: 'Nagyobb teljesítményű rendszer',
-      gazdasagi: 'Gazdasági épületre telepítés',
-      korszerusites: 'Meglévő rendszer korszerűsítése',
-      pelus: 'Napelem + Pellet fűtés',
-      energiatarolas: 'Energiatárolás (akkumulátor)',
-      hibaelhárítás: 'Meglévő rendszer hibája',
-      egyéb: 'Egyéb napelemes megoldás',
-    }
-    return serviceMap[serviceValue] || serviceValue
+}
+
+const getServiceDisplayName = (serviceValue) => {
+  const serviceMap = {
+    hazasitalis: 'Háztartási napelemes rendszer',
+    nagyobb: 'Nagyobb teljesítményű rendszer',
+    gazdasagi: 'Gazdasági épületre telepítés',
+    korszerusites: 'Meglévő rendszer korszerűsítése',
+    pelus: 'Napelem + Pellet fűtés',
+    energiatarolas: 'Energiatárolás (akkumulátor)',
+    hibaelhárítás: 'Meglévő rendszer hibája',
+    egyéb: 'Egyéb napelemes megoldás',
   }
-  
-  const initPage = () => {
-    persistClickIdsFromUrl()
-  
-    const header = document.querySelector('header')
-    const footer = document.querySelector('footer')
-    const navbar = document.querySelector('nav')
-    const siteChatWidget = document.querySelector('.lc_text-widget')
-  
-    if (header) header.style.display = 'none'
-    if (footer) footer.style.display = 'none'
-    if (navbar) navbar.style.display = 'none'
-    if (siteChatWidget) siteChatWidget.style.display = 'none'
-  
-    document.querySelectorAll('header, footer, .lc_text-widget').forEach((el) => {
-      el.style.display = 'none'
-    })
-  }
-  
-  onMounted(() => {
-    initPage()
+  return serviceMap[serviceValue] || serviceValue
+}
+
+const initPage = () => {
+  persistClickIdsFromUrl()
+
+  const header = document.querySelector('header')
+  const footer = document.querySelector('footer')
+  const navbar = document.querySelector('nav')
+  const siteChatWidget = document.querySelector('.lc_text-widget')
+
+  if (header) header.style.display = 'none'
+  if (footer) footer.style.display = 'none'
+  if (navbar) navbar.style.display = 'none'
+  if (siteChatWidget) siteChatWidget.style.display = 'none'
+
+  document.querySelectorAll('header, footer, .lc_text-widget').forEach((el) => {
+    el.style.display = 'none'
   })
+}
+
+onMounted(() => {
+  initPage()
+})
 </script>
 
 <template>
   <section>
-    <div class="about-content about-content--subpage-next-format position-relative no-header-footer-page">
+    <div
+      class="about-content about-content--subpage-next-format position-relative no-header-footer-page"
+    >
       <div class="subpage-content">
         <!-- HERO BANNER -->
         <div class="trust-banner trust-banner--with-image">
           <div class="banner-bg-image">
             <NuxtImg
-              src="/img/hero.svg"
+              src="/img/hero.webp"
               alt="Napelemes Rendszer Szatmárban - Ingyenes Felmérés"
               class="banner-image"
               width="1200"
@@ -181,10 +177,35 @@
           <div class="banner-content">
             <h1 class="main-title">NAPELEMES RENDSZER + ENERGIATÁROLÁS</h1>
             <p class="banner-subtitle">
-              <i class="supage-content__p__i">Megjelent az állami energiatárolási pályázat • Teljes ügyintézés • Felmérés ingyenes</i>
+              <i class="supage-content__p__i"
+                >Ingyenes felmérés • Teljes körű kivitelezés • Gyors
+                ügyintézés</i
+              >
             </p>
+            <div class="social-proof" aria-label="Vásárlói visszajelzés">
+              <div class="rating">
+                <span class="rating-score">4,9</span>
+                <div class="stars" aria-hidden="true">
+                  <span class="star">★</span>
+                  <span class="star">★</span>
+                  <span class="star">★</span>
+                  <span class="star">★</span>
+                  <span class="star star--half">★</span>
+                </div>
+                <span class="rating-text">értékelés</span>
+              </div>
+              <div class="proof-metrics">
+                <div class="metric">
+                  <span class="metric-value">1000+</span>
+                  <span class="metric-label">kiszolgált ügyfél</span>
+                </div>
+              </div>
+            </div>
             <p class="banner-value-prop">
-              2025-ben nyílt meg az <strong>Otthoni Energiatárolás Program</strong> pályázati kiírása. Az energia függetlenség most már elérhető. Napelemes rendszer + akkumulátor = valódi megoldás. Mi gondoskodunk a teljes ügyintézésről – csak egy rövid formanyomtatvány!
+              Napelemes rendszer kivitelezésben segítünk A-tól Z-ig, akár
+              <strong>teljes önerőből</strong>, akár
+              <strong>támogatási lehetőséggel</strong>. Rövid űrlap – gyors
+              visszahívás és ingyenes felmérés.
             </p>
           </div>
         </div>
@@ -192,49 +213,64 @@
         <!-- 3 KIEMELT ÉRVELÉS -->
         <div class="benefits-grid">
           <div class="benefit-card">
-            <h3>🔋 Vissza nem térítendő állami támogatás</h3>
+            <h3>⚡ Prémium kivitelezés, helyi csapattal</h3>
             <p>
-              <strong>Az Otthoni Energiatárolás Program mostanra elindult.</strong>
-              Azok a háztartások, amelyek rendelkeznek napelemes rendszerrel vagy vállalják annak telepítését, pályázhatnak az energiatárolásra. A kiírás egyszerű: mindent mi intézünk Ön helyett. 
+              <strong
+                >Tervezés, engedélyeztetés, telepítés – egy kézben.</strong
+              >
+              Lakossági és kisebb vállalkozói rendszereknél is gyorsan és
+              átláthatóan dolgozunk, ingyenes felméréssel.
             </p>
           </div>
           <div class="benefit-card">
-            <h3>🔌 Napelem + Akkumulátor = Energiafüggetlenség</h3>
+            <h3>🔌 Napelem + Energiatárolás, ha valóban számít</h3>
             <p>
-              <strong>Az energiatárolás az igazi megtakarításhoz.</strong>
-              Nem csak termelni kell, hanem tárolni is az áramot. Éjszaka is van energia, amikor szüksége van rá. A bruttóelszámolás miatt különösen értékes a накопитель.
+              <strong>Okosabb felhasználás, nagyobb önfogyasztás.</strong>
+              Ha szeretné csökkenteni a hálózati függőséget, megtervezzük a
+              napelemes rendszert és a tárolást is az igényeihez.
             </p>
           </div>
           <div class="benefit-card">
             <h3>✅ Mi Intézünk Mindent</h3>
             <p>
               <strong>A papírmunka és felmérés a mi feladatunk.</strong>
-              Helyszíni felmérés, pályázatírás, engedélyeztetés, telepítés, bejelentés – mindent mi kezelünk. Ön csak élvezi az eredményt.
+              Helyszíni felmérés, ügyintézés, engedélyeztetés, telepítés,
+              bejelentés – mindent mi kezelünk. Ön csak élvezi az eredményt.
             </p>
           </div>
         </div>
 
         <!-- BIZALOM MODUL -->
-        <div class="trust-module">
+        <div class="trust-module d-none">
           <div class="trust-item">
             <div class="trust-icon">🔋</div>
             <div class="trust-content">
-              <h4>Otthoni Energiatárolás Program</h4>
-              <p>Az OETP 100 milliárd forintból támogatja az energiatárólókat. Jogosultság: magyarországi lakhely, meglévő vagy tervezett napelemes rendszer.</p>
+              <h4>Energiatárolás – ha szüksége van rá</h4>
+              <p>
+                Energiatárolásra is tudunk javaslatot adni – akár meglévő, akár
+                új napelemes rendszer mellé. Támogatási lehetőségek időszakosan
+                elérhetők, de a kivitelezés egész évben megy.
+              </p>
             </div>
           </div>
           <div class="trust-item">
             <div class="trust-icon">⚙️</div>
             <div class="trust-content">
-              <h4>Inverter Csere & Meglévő Rendszerek</h4>
-              <p>Ha már van napeleme, az akkumulátor és az inverter csere is támogatott. Meglévő rendszerek is jelentkezhetnek.</p>
+              <h4>Meglátjuk, mit bír a tető és a fogyasztás</h4>
+              <p>
+                Ha már van rendszere, átnézzük, optimalizáljuk, bővítjük. Ha még
+                nincs: megtervezzük a legjobb megoldást.
+              </p>
             </div>
           </div>
           <div class="trust-item">
             <div class="trust-icon">👨‍💼</div>
             <div class="trust-content">
               <h4>Szatmári Szakembercím</h4>
-              <p>Helyi csapat, helyi tudás. Mi tudjuk, milyen a szatmári tetők, időjárás és áramszolgáltatás. Ingyenes konzultáció.</p>
+              <p>
+                Helyi csapat, helyi tudás. Mi tudjuk, milyen a szatmári tetők,
+                időjárás és áramszolgáltatás. Ingyenes konzultáció.
+              </p>
             </div>
           </div>
         </div>
@@ -247,28 +283,36 @@
               <div class="step-number">1</div>
               <div class="step-content">
                 <h4>Felmérés</h4>
-                <p>Meglátogatunk Önt, felmérjük a lehetőségeket. Kötelezettségmentes.</p>
+                <p>
+                  Meglátogatunk Önt, felmérjük a lehetőségeket.
+                  Kötelezettségmentes.
+                </p>
               </div>
             </div>
             <div class="process-step">
               <div class="step-number">2</div>
               <div class="step-content">
-                <h4>Ajánlat & Pályázat</h4>
-                <p>Részletes ajánlatot és pályázati tervet készítünk.</p>
+                <h4>Ajánlat & Tervezés</h4>
+                <p>Részletes ajánlatot és műszaki tervet készítünk.</p>
               </div>
             </div>
             <div class="process-step">
               <div class="step-number">3</div>
               <div class="step-content">
                 <h4>Ügyintézés</h4>
-                <p>Összes engedély, bejelentés, papírmunka – mi gondoskodunk.</p>
+                <p>
+                  Összes engedély, bejelentés, papírmunka – mi gondoskodunk.
+                </p>
               </div>
             </div>
             <div class="process-step">
               <div class="step-number">4</div>
               <div class="step-content">
                 <h4>Telepítés & Üzembe</h4>
-                <p>Profi csapat telepíti a rendszert. Használatbavételig mi vezetünk.</p>
+                <p>
+                  Profi csapat telepíti a rendszert. Használatbavételig mi
+                  vezetünk.
+                </p>
               </div>
             </div>
           </div>
@@ -276,7 +320,7 @@
 
         <!-- MIT TARTALMAZ -->
         <div class="includes-section">
-          <h2 class="section-heading">Mit tartalmaz a teljes körű ügyintézés?</h2>
+          <h2 class="section-heading">Mit kap az ingyenes felmérés során?</h2>
           <div class="includes-grid">
             <div class="include-item">
               <span class="include-check">✓</span>
@@ -284,31 +328,11 @@
             </div>
             <div class="include-item">
               <span class="include-check">✓</span>
-              <strong>Részletes ajánlat</strong>
+              <strong>Ingyenes megtakarítás-kalkuláció</strong>
             </div>
             <div class="include-item">
               <span class="include-check">✓</span>
-              <strong>Pályázatírás és bejelentkezés</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Összes szükséges engedély</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Professzionális telepítés</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Bejelentés az áramszolgáltatónál</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Üzembe helyezés és oktatás</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Garancia és szavatosság</strong>
+              <strong>Ajánlat + teljes körű ügyintézés</strong>
             </div>
           </div>
         </div>
@@ -318,93 +342,183 @@
           <h2 class="section-heading">Gyakran feltett kérdések</h2>
 
           <div class="faq-list">
-            <details class="faq-item" :ref="(el) => (faqRefs[0] = el)" @toggle="handleFaqToggle(0)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[0] = el)"
+              @toggle="handleFaqToggle(0)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">💰 Mi az OETP (Otthoni Energiatárolás Program)?</span>
+                <span class="faq-title"
+                  >💰 Mennyibe kerül egy napelemes rendszer?</span
+                >
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Az OETP egy új állami pályázati program, amely 100 milliárd forintot csoportosít az energiatárolók beszerzésére. Azok a háztartások jogosultak, amelyek magyarországi lakhellyel rendelkeznek, és rendelkeznek napelemes rendszerrel, vagy vállalják annak telepítését. Pontos feltételekről és lehetőségeiről személyesen konzultálunk.</p>
+                <p class="faq-text">
+                  A pontos ár a fogyasztástól, tetőtől és a kívánt
+                  teljesítménytől függ. Ingyenes felmérés után adunk korrekt,
+                  tételes ajánlatot. Ha időszakosan van támogatási lehetőség,
+                  abban is segítünk eligazodni, de a kivitelezés nem ettől függ.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[1] = el)" @toggle="handleFaqToggle(1)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[1] = el)"
+              @toggle="handleFaqToggle(1)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">⏱️ Megtérül-e a napelemes rendszer?</span>
+                <span class="faq-title"
+                  >⏱️ Megtérül-e a napelemes rendszer?</span
+                >
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Igen, de az pontos megtérülési idő az Ön konkrét helyzetétől függ – tetőmé, fogyasztás, áramár. Ezért szükséges a részletes felmérés. Sok háztartás kedvezően jár, különösen az akkumulátoros programmal.</p>
+                <p class="faq-text">
+                  Igen, de az pontos megtérülési idő az Ön konkrét helyzetétől
+                  függ – tetőmé, fogyasztás, áramár. Ezért szükséges a részletes
+                  felmérés. Sok háztartás kedvezően jár, különösen az
+                  akkumulátoros programmal.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[2] = el)" @toggle="handleFaqToggle(2)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[2] = el)"
+              @toggle="handleFaqToggle(2)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">🏡 Jogosult vagyok-e az állami támogatásra?</span>
+                <span class="faq-title"
+                  >🏡 Mennyi idő alatt készül el a rendszer?</span
+                >
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Az ingatlannak Magyarországon kell lennie, és lakóingatlannak kell lennie. Vannak egyéb feltételek is, melyeket a felmérés során tisztázunk. Javasolt, hogy hívjon bennünket vagy töltse ki az űrlapot – akkor pontosan tudunk segíteni.</p>
+                <p class="faq-text">
+                  A felméréstől a telepítésig az átfutás több tényezőtől függ,
+                  de a célunk mindig a gyors, kiszámítható ütemezés. A telepítés
+                  általában rövid, a szükséges adminisztrációt mi intézzük.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[3] = el)" @toggle="handleFaqToggle(3)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[3] = el)"
+              @toggle="handleFaqToggle(3)"
+            >
               <summary class="faq-question">
                 <span class="faq-title">💡 Mennyi áramot spórolhatok meg?</span>
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Ez szigorúan az Ön helyzetétől függ. Ahhoz, hogy pontos becslést adjunk, szükséges a helyszíni felmérés, a tetőméret, a jelenlegi fogyasztás és az éghajlat elemzése. Egyedi ajánlatot készítünk – ezt követően sok ügyfél meglepődik az eredményen.</p>
+                <p class="faq-text">
+                  Ez szigorúan az Ön helyzetétől függ. Ahhoz, hogy pontos
+                  becslést adjunk, szükséges a helyszíni felmérés, a tetőméret,
+                  a jelenlegi fogyasztás és az éghajlat elemzése. Egyedi
+                  ajánlatot készítünk – ezt követően sok ügyfél meglepődik az
+                  eredményen.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[4] = el)" @toggle="handleFaqToggle(4)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[4] = el)"
+              @toggle="handleFaqToggle(4)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">🔨 Mennyi idő alatt telepítik a rendszert?</span>
+                <span class="faq-title"
+                  >🔨 Mennyi idő alatt telepítik a rendszert?</span
+                >
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">A felmérésből az üzembe helyezésig általában néhány hét szükséges – ennek függőséget sok tényezőtől. A tényleges fizikai telepítés viszonylag gyors. Pontos ütemezésről az első konzultáció során beszélünk.</p>
+                <p class="faq-text">
+                  A felmérésből az üzembe helyezésig általában néhány hét
+                  szükséges – ennek függőséget sok tényezőtől. A tényleges
+                  fizikai telepítés viszonylag gyors. Pontos ütemezésről az első
+                  konzultáció során beszélünk.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[5] = el)" @toggle="handleFaqToggle(5)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[5] = el)"
+              @toggle="handleFaqToggle(5)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">📋 Ki intézi az összes papírmunkát?</span>
+                <span class="faq-title"
+                  >📋 Ki intézi az engedélyeket és papírmunkát?</span
+                >
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Mi gondoskodunk az összes szükséges engedélyről: önkormányzat, áramszolgáltató, hatósági előírások. Önnek csak annyi a feladata, hogy aláírja a szükséges dokumentumokat. A bonyolult részek a mi feladatunk.</p>
+                <p class="faq-text">
+                  Mi gondoskodunk az összes szükséges engedélyről: önkormányzat,
+                  áramszolgáltató, hatósági előírások. Önnek csak annyi a
+                  feladata, hogy aláírja a szükséges dokumentumokat. A bonyolult
+                  részek a mi feladatunk.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[6] = el)" @toggle="handleFaqToggle(6)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[6] = el)"
+              @toggle="handleFaqToggle(6)"
+            >
               <summary class="faq-question">
                 <span class="faq-title">🔧 Karbantartás szükséges?</span>
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">A napelemes panelek szinte karbantartásmentes. Az eső a legtöbb szennyeződést lemossa. Évente néha szép tiszta időben érdemes ellenőrizni. A részletekről majd oktatunk, amikor üzembe helyezzük a rendszert.</p>
+                <p class="faq-text">
+                  A napelemes panelek szinte karbantartásmentes. Az eső a
+                  legtöbb szennyeződést lemossa. Évente néha szép tiszta időben
+                  érdemes ellenőrizni. A részletekről majd oktatunk, amikor
+                  üzembe helyezzük a rendszert.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[7] = el)" @toggle="handleFaqToggle(7)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[7] = el)"
+              @toggle="handleFaqToggle(7)"
+            >
               <summary class="faq-question">
                 <span class="faq-title">✅ Van garancia?</span>
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Igen, a modern napelemes rendszerek szavatossággal és garanciával járnak. A részletekről majd az ajánlatunkban írunk – mindent beépítünk az ügyintézésbe.</p>
+                <p class="faq-text">
+                  Igen, a modern napelemes rendszerek szavatossággal és
+                  garanciával járnak. A részletekről majd az ajánlatunkban írunk
+                  – mindent beépítünk az ügyintézésbe.
+                </p>
               </div>
             </details>
 
-            <details class="faq-item" :ref="(el) => (faqRefs[8] = el)" @toggle="handleFaqToggle(8)">
+            <details
+              class="faq-item"
+              :ref="(el) => (faqRefs[8] = el)"
+              @toggle="handleFaqToggle(8)"
+            >
               <summary class="faq-question">
-                <span class="faq-title">? Mikor lehet pályázni ?</span>
+                <span class="faq-title">💰 Van-e most elérhető támogatás?</span>
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
               <div class="faq-answer">
-                <p class="faq-text">Az OETP pályázatnak több ütemezése van. A legjobb, ha minél előbb felveszi velünk a kapcsolatot – mi tudjuk, mely határidők aktívak, és hogyan lehet optimálisan jelentkezni.</p>
+                <p class="faq-text">
+                  Támogatási lehetőségek időszakosan jelennek meg és változnak.
+                  Ha kitölti az űrlapot vagy felhív minket, elmondjuk az
+                  aktuális helyzetet, és javaslunk olyan megoldást is, ami
+                  önerőből is jól működik.
+                </p>
               </div>
             </details>
           </div>
@@ -412,23 +526,38 @@
 
         <!-- ZÁRÓ CTA SECTION -->
         <div class="closing-cta-section">
-          <h2 class="section-heading">Az Energiatárolás éve</h2>
+          <h2 class="section-heading">Kér egy ingyenes konzultációt?</h2>
           <p class="closing-message">
-            Az <strong>Otthoni Energiatárolás Program</strong> most valóban elérhető. Azok a háztartások, amelyek napelemes rendszerrel rendelkeznek (vagy azt tervezik), most az energiatárolást is támogatottabbá tudják finanszírozni.
-            <br><br>
-            <i><strong>Ne maradjon le!</strong> Az időzítés fontos. Hívjon minket vagy töltse ki az űrlapot – beszéljük meg, hogyan jár jól az Ön helyzete.</i>
+            <strong>Egész évben</strong> vállalunk napelemes kivitelezést és
+            ingyenes felmérést. Akár <strong>teljes önerőből</strong>, akár ha
+            épp van elérhető támogatási lehetőség, segítünk átlátni.
+            <br /><br />
+            <i
+              ><strong>Gyors visszahívás</strong> – rövid űrlap, pontos
+              egyeztetés.</i
+            >
           </p>
         </div>
 
         <!-- CONTACT METHOD CHOICE -->
         <div class="contact-choice">
-          <p class="choice-intro">Válasszon: Hívjon minket vagy töltse ki az űrlapot!</p>
+          <p class="choice-intro">
+            Válasszon: Hívjon minket vagy töltse ki az űrlapot!
+          </p>
           <div class="choice-buttons">
-            <button class="choice-btn choice-btn--phone" :class="{ active: contactMethod === 'phone' }" @click="contactMethod = 'phone'">
+            <button
+              class="choice-btn choice-btn--phone"
+              :class="{ active: contactMethod === 'phone' }"
+              @click="contactMethod = 'phone'"
+            >
               <span class="choice-icon">☎️</span>
               <span class="choice-text">Hívjon minket most!</span>
             </button>
-            <button class="choice-btn choice-btn--form" :class="{ active: contactMethod === 'form' }" @click="contactMethod = 'form'">
+            <button
+              class="choice-btn choice-btn--form"
+              :class="{ active: contactMethod === 'form' }"
+              @click="contactMethod = 'form'"
+            >
               <span class="choice-icon">📝</span>
               <span class="choice-text">Töltse ki az űrlapot</span>
             </button>
@@ -440,7 +569,9 @@
           <div class="phone-card">
             <div class="phone-card-icon">☎️</div>
             <h3 class="phone-card-title">Hívjon Minket Most!</h3>
-            <p class="phone-card-subtitle">Beszéljen közvetlenül szakemberrel</p>
+            <p class="phone-card-subtitle">
+              Beszéljen közvetlenül szakemberrel
+            </p>
             <a href="tel:+36204517238" class="phone-button">
               <span class="phone-icon">📞</span>
               <span class="phone-number">+36 20 451 7238</span>
@@ -452,7 +583,7 @@
             <div class="phone-benefits">
               <div class="benefit">✓ Azonnali tanácsadás</div>
               <div class="benefit">✓ Felmérés időpontja</div>
-              <div class="benefit">✓ Pályázati kérdések</div>
+              <div class="benefit">✓ Finanszírozási kérdések</div>
             </div>
           </div>
         </div>
@@ -461,91 +592,163 @@
         <div v-if="contactMethod === 'form'" class="contact-section">
           <form class="appointment-form" @submit="submitForm">
             <div class="form-section">
-              <h3 class="section-title">Milyen napelemes rendszerre van szüksége?</h3>
-      
+              <h3 class="section-title">Pár kérdés, és visszahívjuk</h3>
+
               <div class="form-group">
-                <label class="supage-content__ul__li__strong">Rendszer típusa *</label>
-                <select v-model="formData.serviceType" required class="form-select" :disabled="isSubmitting">
-                  <option value="">Válasszon rendszert...</option>
-                  <option value="hazasitalis">Háztartási napelemes rendszer</option>
-                  <option value="nagyobb">Nagyobb teljesítményű rendszer (10+ kW)</option>
-                  <option value="gazdasagi">Gazdasági épületre telepítés</option>
-                  <option value="korszerusites">Meglévő rendszer korszerűsítése</option>
-                  <option value="pelus">Napelem + Pellet/Hőszivattyú</option>
-                  <option value="energiatarolas">Energiatárolás (Akkumulátor)</option>
-                  <option value="hibaelhárítás">Meglévő rendszer hibáje</option>
-                  <option value="egyéb">Egyéb napelemes megoldás</option>
+                <label class="supage-content__ul__li__strong"
+                  >Finanszírozás *</label
+                >
+                <select
+                  v-model="formData.financing"
+                  required
+                  class="form-select"
+                  :disabled="isSubmitting"
+                >
+                  <option value="">Válasszon...</option>
+                  <option value="onero">Teljes önerőből</option>
+                  <option value="tamogatassal">
+                    Támogatással (ha elérhető)
+                  </option>
                 </select>
               </div>
-      
+
               <div class="form-group">
-                <label class="supage-content__ul__li__strong">Tetőtípus *</label>
-                <select v-model="formData.roofType" required class="form-select" :disabled="isSubmitting">
-                  <option value="">Válasszon tetőtípust...</option>
-                  <option value="tégla">Cseréptetős</option>
-                  <option value="lemez">Lemeztetős</option>
-                  <option value="lapos">Lapos tető</option>
-                  <option value="egyéb">Egyéb</option>
-                </select>
-              </div>
-      
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong">Mikor szeretné a felmérést? *</label>
-                <select v-model="formData.urgency" required class="form-select" :disabled="isSubmitting">
-                  <option value="">Válasszon időpontot...</option>
-                  <option value="sürgős">Minél hamarabb</option>
-                  <option value="normál">Normál időtartam</option>
-                  <option value="tervezett">Tervezett</option>
-                </select>
+                <label class="supage-content__ul__li__strong"
+                  >Mennyi az átlagos rezsiköltsége? *</label
+                >
+                <div class="option-grid" role="radiogroup">
+                  <label class="option-pill">
+                    <input
+                      type="radio"
+                      name="monthlyBill"
+                      value=">200k"
+                      v-model="formData.monthlyBill"
+                      required
+                      :disabled="isSubmitting"
+                    />
+                    <span class="option-pill__text">200 000 Ft felett</span>
+                  </label>
+                  <label class="option-pill">
+                    <input
+                      type="radio"
+                      name="monthlyBill"
+                      value=">300k"
+                      v-model="formData.monthlyBill"
+                      required
+                      :disabled="isSubmitting"
+                    />
+                    <span class="option-pill__text">300 000 Ft felett</span>
+                  </label>
+                  <label class="option-pill">
+                    <input
+                      type="radio"
+                      name="monthlyBill"
+                      value=">400k"
+                      v-model="formData.monthlyBill"
+                      required
+                      :disabled="isSubmitting"
+                    />
+                    <span class="option-pill__text">400 000 Ft felett</span>
+                  </label>
+                  <label class="option-pill">
+                    <input
+                      type="radio"
+                      name="monthlyBill"
+                      value="400k+"
+                      v-model="formData.monthlyBill"
+                      required
+                      :disabled="isSubmitting"
+                    />
+                    <span class="option-pill__text">Ennél is több</span>
+                  </label>
+                </div>
               </div>
             </div>
-      
+
             <div class="form-section">
               <h3 class="section-title">Személyes adatok</h3>
-      
+
               <div class="form-group">
                 <label class="supage-content__ul__li__strong">Név *</label>
-                <input type="text" v-model="formData.name" required class="form-input" placeholder="Teljes név" :disabled="isSubmitting" />
+                <input
+                  type="text"
+                  v-model="formData.name"
+                  required
+                  class="form-input"
+                  placeholder="Teljes név"
+                  :disabled="isSubmitting"
+                />
               </div>
-      
+
               <div class="form-group">
-                <label class="supage-content__ul__li__strong">Email cím *</label>
-                <input type="email" v-model="formData.email" required class="form-input" placeholder="Az árajánlatot ide küldjük" :disabled="isSubmitting" />
+                <label class="supage-content__ul__li__strong">Email cím</label>
+                <input
+                  type="email"
+                  v-model="formData.email"
+                  class="form-input"
+                  placeholder="Az árajánlatot ide küldjük"
+                  :disabled="isSubmitting"
+                />
               </div>
-      
+
               <div class="form-group">
-                <label class="supage-content__ul__li__strong">Telefonszám *</label>
-                <input type="tel" v-model="formData.phone" required class="form-input" placeholder="Gyors egyeztetéshez" :disabled="isSubmitting" />
-              </div>
-      
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong">Cím / Helyszín *</label>
-                <input type="text" v-model="formData.address" required class="form-input" placeholder="Szatmár - A felmérés helyszíne" :disabled="isSubmitting" />
+                <label class="supage-content__ul__li__strong"
+                  >Telefonszám *</label
+                >
+                <input
+                  type="tel"
+                  v-model="formData.phone"
+                  required
+                  class="form-input"
+                  placeholder="Gyors egyeztetéshez"
+                  :disabled="isSubmitting"
+                />
               </div>
             </div>
-      
+
             <div class="form-section">
               <h3 class="section-title">Megjegyzés (Opcionális)</h3>
               <div class="form-group">
-                <label class="supage-content__ul__li__strong">További információ</label>
-                <textarea v-model="formData.message" class="form-textarea" placeholder="Írja le az igényeit, kérdéseit..." rows="4" :disabled="isSubmitting"></textarea>
+                <label class="supage-content__ul__li__strong"
+                  >További információ</label
+                >
+                <textarea
+                  v-model="formData.message"
+                  class="form-textarea"
+                  placeholder="Írja le az igényeit, kérdéseit..."
+                  rows="4"
+                  :disabled="isSubmitting"
+                ></textarea>
               </div>
             </div>
-      
+
             <button type="submit" class="submit-btn" :disabled="isSubmitting">
-              <span class="btn-text" v-if="!isSubmitting">Árajánlatkérés elküldése</span>
+              <span class="btn-text" v-if="!isSubmitting"
+                >Visszahívást kérek</span
+              >
               <span class="btn-text" v-else>Küldés...</span>
             </button>
-      
+
             <p class="privacy-text">
               <i class="supage-content__p__i">
                 Az űrlap elküldésével automatikusan elfogadja az
-                <NuxtLink class="supage-content__nlink" to="/adatvedelmi-tajekoztato">Adatvédelmi Szabályzatot.</NuxtLink>
+                <NuxtLink
+                  class="supage-content__nlink"
+                  to="/adatvedelmi-tajekoztato"
+                  >Adatvédelmi Szabályzatot.</NuxtLink
+                >
               </i>
             </p>
           </form>
-      
-          <div v-if="submitMessage" class="submit-message" :class="{ success: submitMessage.includes('✅'), error: submitMessage.includes('❌') }">
+
+          <div
+            v-if="submitMessage"
+            class="submit-message"
+            :class="{
+              success: submitMessage.includes('✅'),
+              error: submitMessage.includes('❌'),
+            }"
+          >
             {{ submitMessage }}
           </div>
         </div>
@@ -556,12 +759,29 @@
 
 <style scoped>
 /* Header és footer elrejtése */
-header, footer, .header, .footer, nav, .navbar, .site-header, .site-footer {
+header,
+footer,
+.header,
+.footer,
+nav,
+.navbar,
+.site-header,
+.site-footer {
   display: none !important;
 }
 
-body > header, body > footer {
+body > header,
+body > footer {
   display: none !important;
+}
+
+:global(html),
+:global(body) {
+  background: #0a0a0a;
+}
+
+:global(body) {
+  min-height: 100vh;
 }
 
 .subpage-content {
@@ -569,7 +789,73 @@ body > header, body > footer {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  background-color: #f2f2f2;
+  background:
+    radial-gradient(
+      1200px 600px at 20% 0%,
+      rgba(255, 218, 51, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 500px at 90% 10%,
+      rgba(255, 218, 51, 0.08),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+  --accent: #ffda33;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.72);
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.subpage-content::before,
+.subpage-content::after {
+  content: '';
+  position: absolute;
+  inset: auto;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: rgba(255, 218, 51, 0.22);
+  filter: blur(90px);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+  animation: glowFloat 12s ease-in-out infinite;
+}
+
+.subpage-content::before {
+  top: -160px;
+  left: -180px;
+}
+
+.subpage-content::after {
+  bottom: -220px;
+  right: -220px;
+  width: 620px;
+  height: 620px;
+  background: rgba(255, 218, 51, 0.14);
+  animation-duration: 16s;
+}
+
+.subpage-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes glowFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(35px, 18px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 /* ========== HERO BANNER ========== */
@@ -578,11 +864,22 @@ body > header, body > footer {
   border-radius: 15px;
   margin-bottom: 40px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(19, 52, 117, 0.25);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  transform: translateZ(0);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.trust-banner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.6);
 }
 
 .trust-banner--with-image {
-  background: #fff;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
 }
 
 .banner-bg-image {
@@ -609,7 +906,16 @@ body > header, body > footer {
   text-align: center;
   padding: 3.5em 2em;
   width: 100%;
-  background: linear-gradient(180deg, #0d7b2d 0%, #055520 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  backdrop-filter: blur(10px);
+}
+
+.choice-btn:active {
+  transform: translateY(-1px);
 }
 
 .main-title {
@@ -639,6 +945,89 @@ body > header, body > footer {
   opacity: 0.95;
 }
 
+.social-proof {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 9px 12px;
+  margin: 12px auto 14px auto;
+  width: fit-content;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rating-score {
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  font-size: 0.98rem;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 3px;
+  line-height: 1;
+}
+
+.star {
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+.star--half {
+  position: relative;
+  color: rgba(255, 218, 51, 0.35);
+}
+
+.star--half::before {
+  content: '★';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 50%;
+  overflow: hidden;
+  color: var(--accent);
+}
+
+.rating-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.proof-metrics {
+  display: inline-flex;
+  align-items: center;
+}
+
+.metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.metric-value {
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 /* ========== 3 KIEMELT ÉRVELÉS ========== */
 .benefits-grid {
   display: grid;
@@ -649,22 +1038,28 @@ body > header, body > footer {
 }
 
 .benefit-card {
-  background: #fff;
+  background: var(--panel);
   padding: 28px;
   border-radius: 10px;
-  border-left: 6px solid #0d7b2d;
-  box-shadow: 0 4px 15px rgba(13, 123, 45, 0.08);
-  transition: all 0.3s ease;
+  border-left: 6px solid var(--accent);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
+  transform: translateZ(0);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
 }
 
 .benefit-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(13, 123, 45, 0.15);
-  background: #f9faf9;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .benefit-card h3 {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1.15rem;
   margin-bottom: 15px;
   font-weight: 700;
@@ -672,14 +1067,14 @@ body > header, body > footer {
 }
 
 .benefit-card p {
-  color: #333;
+  color: var(--muted);
   line-height: 1.6;
   margin: 0;
   font-size: 0.95rem;
 }
 
 .benefit-card strong {
-  color: #000;
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -693,11 +1088,13 @@ body > header, body > footer {
 }
 
 .trust-item {
-  background: #fff;
+  background: var(--panel);
   padding: 25px;
   border-radius: 10px;
-  border-left: 5px solid #0d7b2d;
-  box-shadow: 0 3px 12px rgba(13, 123, 45, 0.08);
+  border-left: 5px solid var(--accent);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
   display: flex;
   gap: 15px;
 }
@@ -708,14 +1105,14 @@ body > header, body > footer {
 }
 
 .trust-content h4 {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1rem;
   font-weight: 700;
   margin: 0 0 8px 0;
 }
 
 .trust-content p {
-  color: #666;
+  color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0;
@@ -734,11 +1131,13 @@ body > header, body > footer {
 }
 
 .process-step {
-  background: #fff;
+  background: var(--panel);
   padding: 25px;
   border-radius: 10px;
-  border-top: 5px solid #0d7b2d;
-  box-shadow: 0 3px 12px rgba(13, 123, 45, 0.08);
+  border-top: 5px solid var(--accent);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
   text-align: center;
 }
 
@@ -748,8 +1147,8 @@ body > header, body > footer {
   justify-content: center;
   width: 50px;
   height: 50px;
-  background: #0d7b2d;
-  color: #fff;
+  background: var(--accent);
+  color: #000;
   border-radius: 50%;
   font-size: 1.5rem;
   font-weight: 700;
@@ -757,14 +1156,14 @@ body > header, body > footer {
 }
 
 .process-step h4 {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 10px 0;
 }
 
 .process-step p {
-  color: #666;
+  color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0;
@@ -783,25 +1182,28 @@ body > header, body > footer {
 }
 
 .include-item {
-  background: #fff;
+  background: var(--panel);
   padding: 18px;
   border-radius: 8px;
-  border-left: 4px solid #0d7b2d;
-  box-shadow: 0 2px 8px rgba(13, 123, 45, 0.05);
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
   display: flex;
   gap: 12px;
   font-size: 0.95rem;
+  color: var(--text);
 }
 
 .include-check {
-  color: #0d7b2d;
+  color: var(--accent);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 /* ========== SECTION HEADING ========== */
 .section-heading {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 2rem;
   font-weight: bold;
   margin: 1.5em 0 1.5em 0;
@@ -810,13 +1212,21 @@ body > header, body > footer {
 
 /* ========== CLOSING CTA SECTION ========== */
 .closing-cta-section {
-  background: linear-gradient(135deg, #0d7b2d 0%, #055520 100%);
-  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 218, 51, 0.12) 0%,
+      rgba(0, 0, 0, 0.65) 65%
+    ),
+    var(--panel);
+  color: var(--text);
   padding: 40px 30px;
   border-radius: 15px;
   text-align: center;
   margin: 3em 0;
-  box-shadow: 0 10px 30px rgba(13, 123, 45, 0.2);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(14px);
 }
 
 .closing-cta-section .section-heading {
@@ -833,18 +1243,19 @@ body > header, body > footer {
 
 /* ========== CONTACT CHOICE ========== */
 .contact-choice {
-  background: #fff;
+  background: var(--panel);
   padding: 40px 30px;
   border-radius: 15px;
   text-align: center;
   margin: 2.5em auto;
   max-width: 900px;
-  box-shadow: 0 5px 20px rgba(13, 123, 45, 0.1);
-  border: 2px solid #e0e0e0;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(14px);
 }
 
 .choice-intro {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1.3rem;
   font-weight: 700;
   margin: 0 0 30px 0;
@@ -862,27 +1273,34 @@ body > header, body > footer {
   align-items: center;
   gap: 12px;
   padding: 25px 20px;
-  border: 3px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--panel-border);
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
+  backdrop-filter: blur(10px);
 }
 
 .choice-btn:hover {
-  border-color: #0d7b2d;
+  border-color: var(--accent);
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(13, 123, 45, 0.15);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
 }
 
 .choice-btn.active {
-  background: linear-gradient(135deg, #0d7b2d 0%, #055520 100%);
-  color: #fff;
-  border-color: #0d7b2d;
-  box-shadow: 0 8px 25px rgba(13, 123, 45, 0.25);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 218, 51, 0.18) 0%,
+      rgba(0, 0, 0, 0.35) 55%
+    ),
+    rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
 }
 
 .choice-icon {
@@ -914,12 +1332,20 @@ body > header, body > footer {
 
 /* ========== PHONE CARD ========== */
 .phone-card {
-  background: linear-gradient(135deg, #0d7b2d 0%, #055520 100%);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 218, 51, 0.12) 0%,
+      rgba(0, 0, 0, 0.8) 70%
+    ),
+    var(--panel);
   padding: 45px 35px;
   border-radius: 15px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(13, 123, 45, 0.2);
-  color: #fff;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(14px);
 }
 
 .phone-card-icon {
@@ -945,8 +1371,8 @@ body > header, body > footer {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: #fff;
-  color: #0d7b2d;
+  background: var(--accent);
+  color: #000;
   padding: 18px 35px;
   border-radius: 50px;
   text-decoration: none;
@@ -1041,19 +1467,21 @@ body > header, body > footer {
 }
 
 .form-section {
-  background: #fff;
+  background: var(--panel);
   padding: 28px;
   margin: 2.5em 0;
   border-radius: 12px;
-  box-shadow: 0 3px 12px rgba(13, 123, 45, 0.08);
-  border-left: 5px solid #0d7b2d;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  border-left: 5px solid var(--accent);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(14px);
 }
 
 .section-title {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1.35rem;
   margin-bottom: 25px;
-  border-bottom: 3px solid #0d7b2d;
+  border-bottom: 3px solid var(--accent);
   padding-bottom: 12px;
   font-weight: 700;
 }
@@ -1065,7 +1493,7 @@ body > header, body > footer {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text);
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -1074,13 +1502,14 @@ body > header, body > footer {
 .form-textarea {
   width: 100%;
   padding: 13px 15px;
-  border: 2px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   font-size: 15px;
   font-family: inherit;
   transition: all 0.3s;
-  background-color: #fff;
-  color: #333;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  backdrop-filter: blur(8px);
 }
 
 .form-input::placeholder,
@@ -1091,18 +1520,18 @@ body > header, body > footer {
 .form-select {
   width: 100%;
   padding: 13px 16px;
-  border: 2px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   font-size: 15px;
   font-family: inherit;
-  background-color: #fff;
+  background-color: rgba(0, 0, 0, 0.35);
   transition: all 0.3s ease;
   cursor: pointer;
-  color: #333;
+  color: var(--text);
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d7b2d' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffda33' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 18px;
@@ -1111,34 +1540,34 @@ body > header, body > footer {
 
 .form-input:focus,
 .form-textarea:focus {
-  border-color: #0d7b2d;
+  border-color: var(--accent);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(13, 123, 45, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 218, 51, 0.18);
 }
 
 .form-select:focus {
-  border-color: #0d7b2d;
+  border-color: var(--accent);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(13, 123, 45, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 218, 51, 0.18);
 }
 
 .form-select:hover:not(:disabled) {
-  border-color: #0d7b2d;
-  background-color: #fefefe;
+  border-color: var(--accent);
+  background-color: rgba(0, 0, 0, 0.45);
 }
 
 .form-input:disabled,
 .form-textarea:disabled,
 .form-select:disabled {
-  background-color: #f0f0f0;
-  opacity: 0.65;
+  background-color: rgba(0, 0, 0, 0.25);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 /* ========== SUBMIT BUTTON ========== */
 .submit-btn {
-  background: linear-gradient(135deg, #0d7b2d 0%, #055520 100%);
-  color: #fff;
+  background: var(--accent);
+  color: #000;
   border: none;
   padding: 18px 45px;
   border-radius: 10px;
@@ -1147,24 +1576,96 @@ body > header, body > footer {
   cursor: pointer;
   width: 100%;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(13, 123, 45, 0.3);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
   margin-top: 15px;
+  animation: ctaPulse 1.9s ease-in-out infinite;
+  position: sticky;
+  bottom: 14px;
+  z-index: 3;
+  will-change: transform;
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(13, 123, 45, 0.4);
-  background: linear-gradient(135deg, #055520 0%, #0d7b2d 100%);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
+  background: #ffd44a;
 }
 
 .submit-btn:active:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(0.99);
 }
 
 .submit-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
+  animation: none;
+}
+
+@keyframes ctaPulse {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  }
+  55% {
+    transform: translateY(-2px);
+    box-shadow:
+      0 26px 75px rgba(0, 0, 0, 0.65),
+      0 0 0 6px rgba(255, 218, 51, 0.12);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.option-pill input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option-pill__text {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.option-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+  border-color: var(--accent);
+}
+
+.option-pill:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(255, 218, 51, 0.14);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.6);
 }
 
 .btn-text {
@@ -1174,21 +1675,21 @@ body > header, body > footer {
 
 /* ========== PRIVACY TEXT ========== */
 .privacy-text {
-  color: #666;
+  color: var(--muted);
   font-size: 0.85rem;
   margin-top: 15px;
   text-align: center;
 }
 
 .privacy-text a {
-  color: #0d7b2d;
+  color: var(--accent);
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s;
 }
 
 .privacy-text a:hover {
-  color: #055520;
+  color: #ffd44a;
   text-decoration: underline;
 }
 
@@ -1205,10 +1706,12 @@ body > header, body > footer {
 }
 
 .faq-item {
-  background: #fff;
+  background: var(--panel);
   border-radius: 10px;
-  border-left: 5px solid #0d7b2d;
-  box-shadow: 0 3px 12px rgba(13, 123, 45, 0.08);
+  border-left: 5px solid var(--accent);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(14px);
   transition: all 0.25s ease;
   overflow: hidden;
   width: 100%;
@@ -1216,8 +1719,8 @@ body > header, body > footer {
 
 .faq-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(13, 123, 45, 0.12);
-  background: #f9faf9;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .faq-question {
@@ -1235,7 +1738,7 @@ body > header, body > footer {
 }
 
 .faq-title {
-  color: #0d7b2d;
+  color: var(--accent);
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.4;
@@ -1256,7 +1759,7 @@ body > header, body > footer {
   left: 50%;
   width: 11px;
   height: 2px;
-  background: #0d7b2d;
+  background: var(--accent);
   transform: translate(-50%, -50%);
   border-radius: 2px;
   transition: transform 0.2s ease;
@@ -1271,7 +1774,7 @@ body > header, body > footer {
 }
 
 .faq-item[open] .faq-question {
-  border-bottom: 1px solid rgba(13, 123, 45, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .faq-answer {
@@ -1279,7 +1782,7 @@ body > header, body > footer {
 }
 
 .faq-text {
-  color: #333;
+  color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.6;
   margin: 0;
@@ -1290,19 +1793,19 @@ body > header, body > footer {
   .choice-buttons {
     grid-template-columns: 1fr;
   }
-  
+
   .choice-btn {
     padding: 20px 15px;
   }
-  
+
   .phone-card {
     padding: 30px 25px;
   }
-  
+
   .phone-card-icon {
     font-size: 2.5rem;
   }
-  
+
   .phone-button {
     padding: 16px 28px;
     font-size: 1rem;
@@ -1342,6 +1845,10 @@ body > header, body > footer {
 
   .subpage-content {
     padding: 1.5em;
+  }
+
+  .option-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1390,11 +1897,11 @@ body > header, body > footer {
   .faq-text {
     font-size: 0.85rem;
   }
-  
+
   .contact-choice {
     padding: 25px 20px;
   }
-  
+
   .choice-intro {
     font-size: 1.1rem;
   }
