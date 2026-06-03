@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useGtagConversion } from '~/composables/useGtagConversion'
 
 useHead({
   title: 'Szatmár Napelemes - Ingyenes Felmérés | Szatmárnapelem',
@@ -32,7 +31,7 @@ const submitMessage = ref('')
 const contactMethod = ref('form')
 const formData = ref({
   financing: '',
-  monthlyBill: '',
+  motivations: [],
   name: '',
   email: '',
   phone: '',
@@ -57,6 +56,14 @@ const submitForm = async (event) => {
 
   if (isSubmitting.value) return
 
+  if (
+    !Array.isArray(formData.value.motivations) ||
+    formData.value.motivations.length === 0
+  ) {
+    submitMessage.value = '❌ Kérjük válasszon legalább egy okot.'
+    return
+  }
+
   isSubmitting.value = true
   submitMessage.value = ''
 
@@ -71,7 +78,7 @@ const submitForm = async (event) => {
       email: formData.value.email,
       phone: formData.value.phone,
       financing: formData.value.financing,
-      monthly_bill: formData.value.monthlyBill,
+      motivations: formData.value.motivations.join(', '),
       message: formData.value.message,
       gclid,
       wbraid,
@@ -81,7 +88,7 @@ const submitForm = async (event) => {
       submission_date: new Date().toISOString(),
       custom_field_1: 'Napelemes kivitelezés + konzultáció',
       custom_field_2: formData.value.financing,
-      custom_field_3: formData.value.monthlyBill,
+      custom_field_3: formData.value.motivations.join(', '),
     }
 
     const response = await fetch(webhookUrl, {
@@ -96,12 +103,9 @@ const submitForm = async (event) => {
       submitMessage.value =
         '✅ Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.'
 
-      const { reportConversion } = useGtagConversion()
-      reportConversion()
-
       formData.value = {
         financing: '',
-        monthlyBill: '',
+        motivations: [],
         name: '',
         email: '',
         phone: '',
@@ -541,6 +545,7 @@ onMounted(() => {
 
         <!-- CONTACT METHOD CHOICE -->
         <div class="contact-choice">
+          <span class="visually-hidden">+36 30 630 882 4830</span>
           <p class="choice-intro">
             Válasszon: Hívjon minket vagy töltse ki az űrlapot!
           </p>
@@ -572,9 +577,9 @@ onMounted(() => {
             <p class="phone-card-subtitle">
               Beszéljen közvetlenül szakemberrel
             </p>
-            <a href="tel:+36204517238" class="phone-button">
+            <a href="tel:+36306308824830" class="phone-button">
               <span class="phone-icon">📞</span>
-              <span class="phone-number">+36 20 451 7238</span>
+              <span class="phone-number">+36 30 630 882 4830</span>
             </a>
             <div class="phone-info">
               <p><strong>Kedvező időpontban beszélgetünk</strong></p>
@@ -614,52 +619,42 @@ onMounted(() => {
 
               <div class="form-group">
                 <label class="supage-content__ul__li__strong"
-                  >Mennyi az átlagos rezsiköltsége? *</label
+                  >Miért gondolkodik napelemben? *</label
                 >
                 <div class="option-grid" role="radiogroup">
                   <label class="option-pill">
                     <input
-                      type="radio"
-                      name="monthlyBill"
-                      value=">200k"
-                      v-model="formData.monthlyBill"
-                      required
+                      type="checkbox"
+                      name="motivations"
+                      value="anyagi_megtakaritas"
+                      v-model="formData.motivations"
                       :disabled="isSubmitting"
                     />
-                    <span class="option-pill__text">200 000 Ft felett</span>
+                    <span class="option-pill__text">Anyagi megtakarítás</span>
                   </label>
                   <label class="option-pill">
                     <input
-                      type="radio"
-                      name="monthlyBill"
-                      value=">300k"
-                      v-model="formData.monthlyBill"
-                      required
+                      type="checkbox"
+                      name="motivations"
+                      value="energiaar_emelkedes"
+                      v-model="formData.motivations"
                       :disabled="isSubmitting"
                     />
-                    <span class="option-pill__text">300 000 Ft felett</span>
+                    <span class="option-pill__text"
+                      >Félelem az energiaár emelkedésétől</span
+                    >
                   </label>
                   <label class="option-pill">
                     <input
-                      type="radio"
-                      name="monthlyBill"
-                      value=">400k"
-                      v-model="formData.monthlyBill"
-                      required
+                      type="checkbox"
+                      name="motivations"
+                      value="bizonytalan_aramellatas"
+                      v-model="formData.motivations"
                       :disabled="isSubmitting"
                     />
-                    <span class="option-pill__text">400 000 Ft felett</span>
-                  </label>
-                  <label class="option-pill">
-                    <input
-                      type="radio"
-                      name="monthlyBill"
-                      value="400k+"
-                      v-model="formData.monthlyBill"
-                      required
-                      :disabled="isSubmitting"
-                    />
-                    <span class="option-pill__text">Ennél is több</span>
+                    <span class="option-pill__text"
+                      >Bizonytalan áramellátás</span
+                    >
                   </label>
                 </div>
               </div>
@@ -773,6 +768,18 @@ nav,
 body > header,
 body > footer {
   display: none !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 :global(html),
