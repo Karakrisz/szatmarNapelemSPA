@@ -20,6 +20,8 @@ export default defineNuxtConfig({
             'Szatmár Napelemes - Ingyenes Felmérés | Szatmárnapelem',
         },
         { name: 'format-detection', content: 'telephone=no' },
+        { name: 'theme-color', content: '#0b0b0c' },
+        { name: 'apple-mobile-web-app-title', content: 'Szatmár Solar' },
         { hid: 'robots', name: 'robots', content: 'index, follow' },
         {
           'http-equiv': 'Content-Security-Policy',
@@ -33,7 +35,10 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
         { rel: 'canonical', href: 'https://csempe.burkololapoutlet.hu/' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com' },

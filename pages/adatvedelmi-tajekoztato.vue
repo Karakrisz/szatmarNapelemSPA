@@ -175,7 +175,7 @@ useHead({
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 2rem 2rem 2rem;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #e3e5e8;
 }
 
 /* ========== BACK BUTTON ========== */
@@ -183,19 +183,19 @@ useHead({
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #F37E21;
+  color: #141517;
   text-decoration: none;
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
   padding: 10px 16px;
   border-radius: 8px;
-  background: rgba(243, 126, 33, 0.05);
+  background: #f6f7f8;
 }
 
 .back-button:hover {
-  background: rgba(243, 126, 33, 0.12);
-  color: #e06911;
+  background: #eef0f2;
+  color: #141517;
   transform: translateX(-5px);
 }
 
@@ -216,29 +216,29 @@ useHead({
   background: #fff;
   padding: 3rem 2rem;
   border-radius: 12px;
-  border-left: 6px solid #F37E21;
-  box-shadow: 0 4px 15px rgba(243, 126, 33, 0.08);
+  border-left: 6px solid #ffd833;
+  box-shadow: 0 4px 15px rgba(35, 39, 46, 0.06);
 }
 
 /* ========== TITLES ========== */
 .policy-title {
-  color: #F37E21;
+  color: #141517;
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 10px;
-  border-bottom: 3px solid #F37E21;
+  border-bottom: 3px solid #ffd833;
   padding-bottom: 15px;
 }
 
 .policy-date {
-  color: #666;
+  color: #5f6672;
   font-size: 0.95rem;
   font-style: italic;
   margin-bottom: 30px;
 }
 
 .policy-h2 {
-  color: #F37E21;
+  color: #141517;
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 15px;
@@ -247,7 +247,7 @@ useHead({
 }
 
 .policy-h3 {
-  color: #F37E21;
+  color: #141517;
   font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 12px;
@@ -258,13 +258,13 @@ useHead({
 .policy-section {
   margin-bottom: 30px;
   padding: 20px;
-  background: #f9f9f9;
+  background: #f6f7f8;
   border-radius: 8px;
-  border-left: 4px solid #F37E21;
+  border-left: 4px solid #ffd833;
 }
 
 .policy-section p {
-  color: #333;
+  color: #5f6672;
   line-height: 1.7;
   margin-bottom: 12px;
   font-size: 0.95rem;
@@ -275,19 +275,19 @@ useHead({
 }
 
 .policy-section strong {
-  color: #000;
+  color: #141517;
   font-weight: 700;
 }
 
 .policy-section a {
-  color: #F37E21;
+  color: #141517;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s;
 }
 
 .policy-section a:hover {
-  color: #e06911;
+  color: #141517;
   text-decoration: underline;
 }
 
@@ -297,11 +297,11 @@ useHead({
   padding: 15px;
   background: #fff;
   border-radius: 6px;
-  border-left: 3px solid #e06911;
+  border-left: 3px solid #ffd833;
 }
 
 .policy-subsection p {
-  color: #333;
+  color: #5f6672;
   line-height: 1.6;
   margin-bottom: 10px;
   font-size: 0.93rem;
@@ -319,7 +319,7 @@ useHead({
 }
 
 .policy-list li {
-  color: #333;
+  color: #5f6672;
   padding: 10px 0 10px 30px;
   position: relative;
   font-size: 0.95rem;
@@ -330,7 +330,7 @@ useHead({
   content: '✓';
   position: absolute;
   left: 0;
-  color: #F37E21;
+  color: #ffd833;
   font-weight: 700;
   font-size: 1.2rem;
 }
@@ -339,7 +339,7 @@ useHead({
 .policy-footer {
   margin-top: 50px;
   padding-top: 30px;
-  border-top: 2px solid #f0f0f0;
+  border-top: 2px solid #e3e5e8;
   text-align: center;
 }
 
@@ -403,7 +403,7 @@ useHead({
 
   .policy-content {
     padding: 1.5rem 1rem;
-    border-left: 4px solid #F37E21;
+    border-left: 4px solid #ffd833;
   }
 
   .policy-title {

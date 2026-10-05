@@ -16,7 +16,7 @@ export default defineNuxtPlugin(() => {
     gtag('config', 'AW-17861229415')
 
     gtag('config', 'AW-17861229415/i2zOCLq7jbgcEOf28sRC', {
-      phone_conversion_number: '+36 30 630 882 4830',
+      phone_conversion_number: '+36 30 836 0703',
     })
   }
 })

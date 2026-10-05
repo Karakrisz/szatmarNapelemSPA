@@ -51,7 +51,7 @@ body {
   max-width: 2570px;
   margin: auto;
   font-family: 'Montserrat', sans-serif;
-  background-color: #f2f2f2;
+  background-color: #fff;
 }
 
 input,
@@ -67,15 +67,9 @@ button {
     background: $white;
   }
   &-thumb {
-    background: linear-gradient(
-      100deg,
-      $primary-color,
-      $primary-color,
-      $primary-color
-    );
-    background-size: 180% 180%;
+    background: #c9cdd3;
+    border-radius: 8px;
     height: 25%;
-    animation: gradient-animation 5s ease infinite;
   }
 }
 

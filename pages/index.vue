@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 useHead({
   title: 'Szatmár Napelemes - Ingyenes Felmérés | Szatmárnapelem',
@@ -28,7 +28,7 @@ function getClickIds() {
 // Reactive variables
 const isSubmitting = ref(false)
 const submitMessage = ref('')
-const contactMethod = ref('form')
+const submitStatus = ref('')
 const formData = ref({
   financing: '',
   motivations: [],
@@ -36,7 +36,166 @@ const formData = ref({
   email: '',
   phone: '',
   message: '',
+  package: '',
 })
+
+const motivationOptions = [
+  { value: 'anyagi_megtakaritas', label: 'Alacsonyabb villanyszámla' },
+  { value: 'energiaar_emelkedes', label: 'Védelem az áremelkedés ellen' },
+  { value: 'bizonytalan_aramellatas', label: 'Biztonságos áramellátás' },
+]
+
+const benefits = [
+  {
+    icon: 'sun',
+    title: 'Alacsonyabb villanyszámla – előre kiszámolva',
+    text: 'Nem ígérgetünk: a saját fogyasztása alapján megmutatjuk, mennyit spórol évente, és mikor térül meg a rendszer. Így még a döntés előtt látja a számokat.',
+  },
+  {
+    icon: 'battery',
+    title: 'Biztonság, ha drágul az áram vagy változnak a szabályok',
+    text: 'Energiatárolóval a nappal megtermelt áramot este is Ön használja fel. Minél több saját áramot fogyaszt, annál kevésbé függ az áraktól és az elszámolási szabályoktól.',
+  },
+  {
+    icon: 'doc',
+    title: 'Nem Önnek kell az engedélyekkel bajlódnia',
+    text: 'Az áramszolgáltatói és hatósági ügyintézést teljes egészében mi visszük végig. A rendszerre gyártói garancia és kivitelezői szavatosság vonatkozik.',
+  },
+]
+
+const trustItems = [
+  'Ingyenes helyszíni felmérés',
+  'Tételes, átlátható ajánlat',
+  'Teljes körű ügyintézés',
+]
+
+// ====== Csomagok + megtakarítás-becslő ======
+const packages = [
+  { kw: 4, price: 2699000, fit: 'Kisebb háztartásoknak' },
+  { kw: 5, price: 2799000, fit: 'Átlagos családi házhoz' },
+  { kw: 6, price: 2899000, fit: 'Megnövekedett fogyasztáshoz', popular: true },
+  { kw: 8, price: 3099000, fit: 'Nagycsaládnak, hőszivattyúhoz' },
+  { kw: 10, price: 3299000, fit: 'Maximális teljesítmény' },
+]
+
+const packageFeatures = [
+  '30 év garancia a napelemekre',
+  'Magas hatásfokú panelek: akár 15%-kal nagyobb termelés',
+  '10 év garancia az inverterre és az akkumulátorra',
+  '5 év garancia a kivitelezésre',
+  'Szünetmentes (UPS) áramellátás kiépítése',
+  'Teljes körű szolgáltatói ügyintézés',
+]
+
+// A becslés feltevései – a lap alján a látogató is látja őket
+const YEARLY_YIELD_PER_KW = 1100 // kWh / kWp / év
+const TIER_LIMIT_KWH = 2523 // kedvezményes lakossági sáv / év
+const PRICE_LOW = 36 // Ft/kWh a sávhatárig
+const PRICE_HIGH = 70 // Ft/kWh a sávhatár felett
+const FEED_IN_PRICE = 5 // Ft/kWh a hálózatba táplált áramért
+const SELF_USE_RATE = 0.8 // akkumulátorral helyben felhasznált hányad
+
+const monthlyBill = ref(30000)
+const pickedKw = ref(null)
+
+const formatNumber = (n) =>
+  String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
+
+const costOf = (kwh) =>
+  Math.min(kwh, TIER_LIMIT_KWH) * PRICE_LOW +
+  Math.max(kwh - TIER_LIMIT_KWH, 0) * PRICE_HIGH
+
+const yearlyKwh = computed(() => {
+  const yearlyCost = monthlyBill.value * 12
+  const lowTierCost = TIER_LIMIT_KWH * PRICE_LOW
+  return yearlyCost <= lowTierCost
+    ? yearlyCost / PRICE_LOW
+    : TIER_LIMIT_KWH + (yearlyCost - lowTierCost) / PRICE_HIGH
+})
+
+const recommendedKw = computed(
+  () =>
+    (
+      packages.find((p) => p.kw * YEARLY_YIELD_PER_KW >= yearlyKwh.value) ||
+      packages[packages.length - 1]
+    ).kw,
+)
+
+const activePackage = computed(() =>
+  packages.find((p) => p.kw === (pickedKw.value ?? recommendedKw.value)),
+)
+
+const estimate = computed(() => {
+  const pkg = activePackage.value
+  const production = pkg.kw * YEARLY_YIELD_PER_KW
+  const selfUsed = Math.min(production, yearlyKwh.value) * SELF_USE_RATE
+  const saving =
+    costOf(yearlyKwh.value) -
+    costOf(yearlyKwh.value - selfUsed) +
+    (production - selfUsed) * FEED_IN_PRICE
+  return {
+    production,
+    saving: Math.round(saving / 1000) * 1000,
+    payback: pkg.price / saving,
+  }
+})
+
+// a csúszka mozgatásakor visszaáll az ajánlott csomagra
+watch(monthlyBill, () => {
+  pickedKw.value = null
+})
+
+const requestPackage = () => {
+  const pkg = activePackage.value
+  formData.value.package = `${pkg.kw} kWp hibrid csomag – ${formatNumber(pkg.price)} Ft`
+  scrollToForm()
+}
+
+const steps = [
+  {
+    title: 'Ingyenes helyszíni felmérés',
+    text: 'Valódi bejárás, nem műholdkép: megnézzük a tetőt, a mérőhelyet és a fogyasztását. Kötelezettség nélkül.',
+  },
+  {
+    title: 'Méretezés és tételes ajánlat',
+    text: 'Az Ön fogyasztására méretezett rendszer, megtakarítás- és megtérülés-számítással, tételes árakkal.',
+  },
+  {
+    title: 'Engedélyeztetés',
+    text: 'Az áramszolgáltatói ügyintézést mi visszük végig – Önnek csak alá kell írnia.',
+  },
+  {
+    title: 'Telepítés és üzembe helyezés',
+    text: 'Szakembereink telepítik és beüzemelik a rendszert, majd megmutatják a használatát. Garanciával.',
+  },
+]
+
+const faqs = [
+  {
+    q: 'Megéri még a napelem a szaldó megszűnése után?',
+    a: 'Igen, ha a rendszert a saját fogyasztásához méretezzük. Az új rendszerek bruttó elszámolásban működnek: a hálózatba visszatáplált áram a vásárolt áram árának csak a töredékét éri. Ezért az a cél, hogy a megtermelt áram minél nagyobb részét otthon használja fel – ebben segít a pontos méretezés és az energiatároló.',
+  },
+  {
+    q: 'Mennyibe kerül, és mikor térül meg?',
+    a: 'Az ár a fogyasztástól, a tetőtől és attól függ, kér-e energiatárolót. Az ingyenes felmérés után tételes ajánlatot és megtakarítás-kalkulációt kap, így még a döntés előtt látja, mennyit spórol évente, és hány év alatt térül meg a rendszer.',
+  },
+  {
+    q: 'Kell akkumulátor a napelem mellé?',
+    a: 'Nem kötelező, de a mai elszámolás mellett sokat javít a megtérülésen: este és borús időben is a saját áramát használja. A fogyasztási szokásai alapján megmutatjuk, megéri-e Önnek, és mekkora tároló az ideális. Meglévő napelemes rendszer mellé is telepítünk.',
+  },
+  {
+    q: 'Működik a rendszer áramszünet idején?',
+    a: 'Egy hagyományos, hálózatra kapcsolt rendszer áramszünetkor biztonsági okból leáll. Energiatárolóval és erre alkalmas inverterrel viszont a kijelölt fogyasztók tovább működhetnek. Ha ez fontos Önnek, jelezze a felméréskor, és így tervezzük meg a rendszert.',
+  },
+  {
+    q: 'Mi lesz, ha megint változnak a szabályok?',
+    a: 'A szabályozást senki nem látja előre, ezért úgy tervezünk, hogy a megtérülés a lehető legkevésbé függjön tőle. Amit a rendszer megtermel és Ön otthon elhasznál, annak az értéke nem függ az átvételi ártól – csak attól, mennyibe kerülne ugyanez az áram a hálózatról.',
+  },
+  {
+    q: 'Ki intézi az engedélyeket, és mennyi időbe telik?',
+    a: 'Az áramszolgáltatói és hatósági ügyintézést teljes egészében mi végezzük, Önnek csak alá kell írnia a dokumentumokat. Maga a telepítés gyors; az átfutás főként az engedélyezésen múlik, a pontos ütemezést az első egyeztetésen megadjuk.',
+  },
+]
 
 // ====== FAQ accordion ======
 const faqRefs = ref([])
@@ -50,22 +209,70 @@ const handleFaqToggle = (activeIndex) => {
   })
 }
 
+// ====== Űrlaphoz görgetés + mobil CTA sáv ======
+const formCard = ref(null)
+const formInView = ref(true)
+const motivationError = ref(false)
+
+const updateFormInView = () => {
+  const rect = formCard.value?.getBoundingClientRect()
+  if (!rect) return
+  formInView.value = rect.bottom > 80 && rect.top < window.innerHeight - 80
+}
+
+const scrollToForm = () => {
+  formCard.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// ====== Jelentkezési határidő visszaszámláló ======
+// október 30. vége, magyar idő szerint
+const DEADLINE = new Date('2026-10-31T00:00:00+01:00')
+const timeLeft = ref(null)
+const deadlinePassed = ref(false)
+let countdownTimer = null
+
+const pad = (n) => String(n).padStart(2, '0')
+
+const updateCountdown = () => {
+  const diff = DEADLINE.getTime() - Date.now()
+  if (diff <= 0) {
+    deadlinePassed.value = true
+    clearInterval(countdownTimer)
+    return
+  }
+  const totalSeconds = Math.floor(diff / 1000)
+  timeLeft.value = {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  }
+}
+
+const countdownUnits = computed(() => {
+  const t = timeLeft.value
+  return [
+    { label: 'nap', value: t ? pad(t.days) : '--' },
+    { label: 'óra', value: t ? pad(t.hours) : '--' },
+    { label: 'perc', value: t ? pad(t.minutes) : '--' },
+    { label: 'mp', value: t ? pad(t.seconds) : '--' },
+  ]
+})
+
 // Form submission handler
 const submitForm = async (event) => {
   event.preventDefault()
 
   if (isSubmitting.value) return
 
-  if (
-    !Array.isArray(formData.value.motivations) ||
-    formData.value.motivations.length === 0
-  ) {
-    submitMessage.value = '❌ Kérjük válasszon legalább egy okot.'
+  if (formData.value.motivations.length === 0) {
+    motivationError.value = true
     return
   }
 
   isSubmitting.value = true
   submitMessage.value = ''
+  submitStatus.value = ''
 
   try {
     const webhookUrl =
@@ -80,6 +287,8 @@ const submitForm = async (event) => {
       financing: formData.value.financing,
       motivations: formData.value.motivations.join(', '),
       message: formData.value.message,
+      package: formData.value.package,
+      monthly_bill: monthlyBill.value,
       gclid,
       wbraid,
       gbraid,
@@ -100,8 +309,9 @@ const submitForm = async (event) => {
     })
 
     if (response.ok) {
+      submitStatus.value = 'success'
       submitMessage.value =
-        '✅ Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.'
+        'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.'
 
       formData.value = {
         financing: '',
@@ -110,45 +320,30 @@ const submitForm = async (event) => {
         email: '',
         phone: '',
         message: '',
+        package: '',
       }
     } else {
       throw new Error('Hiba történt a küldés során')
     }
   } catch (error) {
     console.error('Form submission error:', error)
+    submitStatus.value = 'error'
     submitMessage.value =
-      '❌ Hiba történt. Kérjük próbálja újra, vagy hívjon minket!'
+      'Hiba történt. Kérjük, próbálja újra, vagy hívjon minket!'
   } finally {
     isSubmitting.value = false
   }
 }
 
-const getServiceDisplayName = (serviceValue) => {
-  const serviceMap = {
-    hazasitalis: 'Háztartási napelemes rendszer',
-    nagyobb: 'Nagyobb teljesítményű rendszer',
-    gazdasagi: 'Gazdasági épületre telepítés',
-    korszerusites: 'Meglévő rendszer korszerűsítése',
-    pelus: 'Napelem + Pellet fűtés',
-    energiatarolas: 'Energiatárolás (akkumulátor)',
-    hibaelhárítás: 'Meglévő rendszer hibája',
-    egyéb: 'Egyéb napelemes megoldás',
-  }
-  return serviceMap[serviceValue] || serviceValue
-}
+watch(
+  () => formData.value.motivations.length,
+  (count) => {
+    if (count > 0) motivationError.value = false
+  },
+)
 
 const initPage = () => {
   persistClickIdsFromUrl()
-
-  const header = document.querySelector('header')
-  const footer = document.querySelector('footer')
-  const navbar = document.querySelector('nav')
-  const siteChatWidget = document.querySelector('.lc_text-widget')
-
-  if (header) header.style.display = 'none'
-  if (footer) footer.style.display = 'none'
-  if (navbar) navbar.style.display = 'none'
-  if (siteChatWidget) siteChatWidget.style.display = 'none'
 
   document.querySelectorAll('header, footer, .lc_text-widget').forEach((el) => {
     el.style.display = 'none'
@@ -157,619 +352,512 @@ const initPage = () => {
 
 onMounted(() => {
   initPage()
+
+  updateCountdown()
+  countdownTimer = setInterval(updateCountdown, 1000)
+
+  updateFormInView()
+  window.addEventListener('scroll', updateFormInView, { passive: true })
+  window.addEventListener('resize', updateFormInView)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(countdownTimer)
+  window.removeEventListener('scroll', updateFormInView)
+  window.removeEventListener('resize', updateFormInView)
 })
 </script>
 
 <template>
-  <section>
-    <div
-      class="about-content about-content--subpage-next-format position-relative no-header-footer-page"
-    >
-      <div class="subpage-content">
-        <!-- HERO BANNER -->
-        <div class="trust-banner trust-banner--with-image">
-          <div class="banner-bg-image">
-            <NuxtImg
-              src="/img/hero.webp"
-              alt="Napelemes Rendszer Szatmárban - Ingyenes Felmérés"
-              class="banner-image"
-              width="1200"
-              height="600"
+  <section class="lp">
+    <span class="visually-hidden">+36 30 836 0703</span>
+
+    <!-- FELSŐ SÁV -->
+    <div class="topbar dark-surface dark-surface--slim">
+      <div class="container topbar__inner">
+        <img
+          src="/img/logo-szatmar-solar.png"
+          alt="Szatmár Solar"
+          class="brand-logo"
+          width="428"
+          height="176"
+        />
+        <a href="tel:+36308360703" class="topbar__phone">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"
             />
-          </div>
+          </svg>
+          <span class="topbar__phone-number">+36 30 836 0703</span>
+        </a>
+      </div>
+    </div>
 
-          <div class="banner-content">
-            <h1 class="main-title">NAPELEMES RENDSZER + ENERGIATÁROLÁS</h1>
-            <p class="banner-subtitle">
-              <i class="supage-content__p__i"
-                >Ingyenes felmérés • Teljes körű kivitelezés • Gyors
-                ügyintézés</i
-              >
-            </p>
-            <div class="social-proof" aria-label="Vásárlói visszajelzés">
-              <div class="rating">
-                <span class="rating-score">4,9</span>
-                <div class="stars" aria-hidden="true">
-                  <span class="star">★</span>
-                  <span class="star">★</span>
-                  <span class="star">★</span>
-                  <span class="star">★</span>
-                  <span class="star star--half">★</span>
-                </div>
-                <span class="rating-text">értékelés</span>
-              </div>
-              <div class="proof-metrics">
-                <div class="metric">
-                  <span class="metric-value">1000+</span>
-                  <span class="metric-label">kiszolgált ügyfél</span>
-                </div>
-              </div>
-            </div>
-            <p class="banner-value-prop">
-              Napelemes rendszer kivitelezésben segítünk A-tól Z-ig, akár
-              <strong>teljes önerőből</strong>, akár
-              <strong>támogatási lehetőséggel</strong>. Rövid űrlap – gyors
-              visszahívás és ingyenes felmérés.
-            </p>
-          </div>
-        </div>
-
-        <!-- 3 KIEMELT ÉRVELÉS -->
-        <div class="benefits-grid">
-          <div class="benefit-card">
-            <h3>⚡ Prémium kivitelezés, helyi csapattal</h3>
-            <p>
-              <strong
-                >Tervezés, engedélyeztetés, telepítés – egy kézben.</strong
-              >
-              Lakossági és kisebb vállalkozói rendszereknél is gyorsan és
-              átláthatóan dolgozunk, ingyenes felméréssel.
-            </p>
-          </div>
-          <div class="benefit-card">
-            <h3>🔌 Napelem + Energiatárolás, ha valóban számít</h3>
-            <p>
-              <strong>Okosabb felhasználás, nagyobb önfogyasztás.</strong>
-              Ha szeretné csökkenteni a hálózati függőséget, megtervezzük a
-              napelemes rendszert és a tárolást is az igényeihez.
-            </p>
-          </div>
-          <div class="benefit-card">
-            <h3>✅ Mi Intézünk Mindent</h3>
-            <p>
-              <strong>A papírmunka és felmérés a mi feladatunk.</strong>
-              Helyszíni felmérés, ügyintézés, engedélyeztetés, telepítés,
-              bejelentés – mindent mi kezelünk. Ön csak élvezi az eredményt.
-            </p>
-          </div>
-        </div>
-
-        <!-- BIZALOM MODUL -->
-        <div class="trust-module d-none">
-          <div class="trust-item">
-            <div class="trust-icon">🔋</div>
-            <div class="trust-content">
-              <h4>Energiatárolás – ha szüksége van rá</h4>
-              <p>
-                Energiatárolásra is tudunk javaslatot adni – akár meglévő, akár
-                új napelemes rendszer mellé. Támogatási lehetőségek időszakosan
-                elérhetők, de a kivitelezés egész évben megy.
-              </p>
-            </div>
-          </div>
-          <div class="trust-item">
-            <div class="trust-icon">⚙️</div>
-            <div class="trust-content">
-              <h4>Meglátjuk, mit bír a tető és a fogyasztás</h4>
-              <p>
-                Ha már van rendszere, átnézzük, optimalizáljuk, bővítjük. Ha még
-                nincs: megtervezzük a legjobb megoldást.
-              </p>
-            </div>
-          </div>
-          <div class="trust-item">
-            <div class="trust-icon">👨‍💼</div>
-            <div class="trust-content">
-              <h4>Szatmári Szakembercím</h4>
-              <p>
-                Helyi csapat, helyi tudás. Mi tudjuk, milyen a szatmári tetők,
-                időjárás és áramszolgáltatás. Ingyenes konzultáció.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- HOGYAN MŰKÖDIK SECTION -->
-        <div class="process-section">
-          <h2 class="section-heading">Hogyan működik a folyamat?</h2>
-          <div class="process-steps">
-            <div class="process-step">
-              <div class="step-number">1</div>
-              <div class="step-content">
-                <h4>Felmérés</h4>
-                <p>
-                  Meglátogatunk Önt, felmérjük a lehetőségeket.
-                  Kötelezettségmentes.
-                </p>
-              </div>
-            </div>
-            <div class="process-step">
-              <div class="step-number">2</div>
-              <div class="step-content">
-                <h4>Ajánlat & Tervezés</h4>
-                <p>Részletes ajánlatot és műszaki tervet készítünk.</p>
-              </div>
-            </div>
-            <div class="process-step">
-              <div class="step-number">3</div>
-              <div class="step-content">
-                <h4>Ügyintézés</h4>
-                <p>
-                  Összes engedély, bejelentés, papírmunka – mi gondoskodunk.
-                </p>
-              </div>
-            </div>
-            <div class="process-step">
-              <div class="step-number">4</div>
-              <div class="step-content">
-                <h4>Telepítés & Üzembe</h4>
-                <p>
-                  Profi csapat telepíti a rendszert. Használatbavételig mi
-                  vezetünk.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- MIT TARTALMAZ -->
-        <div class="includes-section">
-          <h2 class="section-heading">Mit kap az ingyenes felmérés során?</h2>
-          <div class="includes-grid">
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Ingyenes helyszíni felmérés</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Ingyenes megtakarítás-kalkuláció</strong>
-            </div>
-            <div class="include-item">
-              <span class="include-check">✓</span>
-              <strong>Ajánlat + teljes körű ügyintézés</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- GYIK SZEKCIÓ -->
-        <div class="faq-section">
-          <h2 class="section-heading">Gyakran feltett kérdések</h2>
-
-          <div class="faq-list">
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[0] = el)"
-              @toggle="handleFaqToggle(0)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title"
-                  >💰 Mennyibe kerül egy napelemes rendszer?</span
-                >
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  A pontos ár a fogyasztástól, tetőtől és a kívánt
-                  teljesítménytől függ. Ingyenes felmérés után adunk korrekt,
-                  tételes ajánlatot. Ha időszakosan van támogatási lehetőség,
-                  abban is segítünk eligazodni, de a kivitelezés nem ettől függ.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[1] = el)"
-              @toggle="handleFaqToggle(1)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title"
-                  >⏱️ Megtérül-e a napelemes rendszer?</span
-                >
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  Igen, de az pontos megtérülési idő az Ön konkrét helyzetétől
-                  függ – tetőmé, fogyasztás, áramár. Ezért szükséges a részletes
-                  felmérés. Sok háztartás kedvezően jár, különösen az
-                  akkumulátoros programmal.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[2] = el)"
-              @toggle="handleFaqToggle(2)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title"
-                  >🏡 Mennyi idő alatt készül el a rendszer?</span
-                >
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  A felméréstől a telepítésig az átfutás több tényezőtől függ,
-                  de a célunk mindig a gyors, kiszámítható ütemezés. A telepítés
-                  általában rövid, a szükséges adminisztrációt mi intézzük.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[3] = el)"
-              @toggle="handleFaqToggle(3)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title">💡 Mennyi áramot spórolhatok meg?</span>
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  Ez szigorúan az Ön helyzetétől függ. Ahhoz, hogy pontos
-                  becslést adjunk, szükséges a helyszíni felmérés, a tetőméret,
-                  a jelenlegi fogyasztás és az éghajlat elemzése. Egyedi
-                  ajánlatot készítünk – ezt követően sok ügyfél meglepődik az
-                  eredményen.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[4] = el)"
-              @toggle="handleFaqToggle(4)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title"
-                  >🔨 Mennyi idő alatt telepítik a rendszert?</span
-                >
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  A felmérésből az üzembe helyezésig általában néhány hét
-                  szükséges – ennek függőséget sok tényezőtől. A tényleges
-                  fizikai telepítés viszonylag gyors. Pontos ütemezésről az első
-                  konzultáció során beszélünk.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[5] = el)"
-              @toggle="handleFaqToggle(5)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title"
-                  >📋 Ki intézi az engedélyeket és papírmunkát?</span
-                >
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  Mi gondoskodunk az összes szükséges engedélyről: önkormányzat,
-                  áramszolgáltató, hatósági előírások. Önnek csak annyi a
-                  feladata, hogy aláírja a szükséges dokumentumokat. A bonyolult
-                  részek a mi feladatunk.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[6] = el)"
-              @toggle="handleFaqToggle(6)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title">🔧 Karbantartás szükséges?</span>
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  A napelemes panelek szinte karbantartásmentes. Az eső a
-                  legtöbb szennyeződést lemossa. Évente néha szép tiszta időben
-                  érdemes ellenőrizni. A részletekről majd oktatunk, amikor
-                  üzembe helyezzük a rendszert.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[7] = el)"
-              @toggle="handleFaqToggle(7)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title">✅ Van garancia?</span>
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  Igen, a modern napelemes rendszerek szavatossággal és
-                  garanciával járnak. A részletekről majd az ajánlatunkban írunk
-                  – mindent beépítünk az ügyintézésbe.
-                </p>
-              </div>
-            </details>
-
-            <details
-              class="faq-item"
-              :ref="(el) => (faqRefs[8] = el)"
-              @toggle="handleFaqToggle(8)"
-            >
-              <summary class="faq-question">
-                <span class="faq-title">💰 Van-e most elérhető támogatás?</span>
-                <span class="faq-icon" aria-hidden="true"></span>
-              </summary>
-              <div class="faq-answer">
-                <p class="faq-text">
-                  Támogatási lehetőségek időszakosan jelennek meg és változnak.
-                  Ha kitölti az űrlapot vagy felhív minket, elmondjuk az
-                  aktuális helyzetet, és javaslunk olyan megoldást is, ami
-                  önerőből is jól működik.
-                </p>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        <!-- ZÁRÓ CTA SECTION -->
-        <div class="closing-cta-section">
-          <h2 class="section-heading">Kér egy ingyenes konzultációt?</h2>
-          <p class="closing-message">
-            <strong>Egész évben</strong> vállalunk napelemes kivitelezést és
-            ingyenes felmérést. Akár <strong>teljes önerőből</strong>, akár ha
-            épp van elérhető támogatási lehetőség, segítünk átlátni.
-            <br /><br />
-            <i
-              ><strong>Gyors visszahívás</strong> – rövid űrlap, pontos
-              egyeztetés.</i
-            >
+    <!-- HERO + ŰRLAP -->
+    <div class="hero">
+      <div class="hero__waves" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="container hero__grid">
+        <div class="hero__text">
+          <p class="eyebrow">Országos kivitelezés</p>
+          <h1 class="hero__title">
+            Napelemes rendszer és energiatárolás,
+            <span class="mark">kulcsrakészen</span>
+          </h1>
+          <p class="hero__lead">
+            Ingyenes helyszíni felmérés, tételes ajánlat és teljes körű
+            kivitelezés – tapasztalt szakemberektől, egy kézből.
           </p>
-        </div>
 
-        <!-- CONTACT METHOD CHOICE -->
-        <div class="contact-choice">
-          <span class="visually-hidden">+36 30 630 882 4830</span>
-          <p class="choice-intro">
-            Válasszon: Hívjon minket vagy töltse ki az űrlapot!
-          </p>
-          <div class="choice-buttons">
-            <button
-              class="choice-btn choice-btn--phone"
-              :class="{ active: contactMethod === 'phone' }"
-              @click="contactMethod = 'phone'"
+          <ul class="check-list">
+            <li>
+              <svg class="icon icon--check" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              Ingyenes, kötelezettségmentes helyszíni felmérés
+            </li>
+            <li>
+              <svg class="icon icon--check" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              Megtakarítás-kalkuláció a saját fogyasztása alapján
+            </li>
+            <li>
+              <svg class="icon icon--check" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              Engedélyeztetés és ügyintézés helyett Ön csak aláír
+            </li>
+          </ul>
+
+          <div class="proof">
+            <span class="proof__value">1000+</span>
+            <span class="proof__label"
+              >kiszolgált ügyfél bízta ránk a rendszerét</span
             >
-              <span class="choice-icon">☎️</span>
-              <span class="choice-text">Hívjon minket most!</span>
-            </button>
-            <button
-              class="choice-btn choice-btn--form"
-              :class="{ active: contactMethod === 'form' }"
-              @click="contactMethod = 'form'"
+          </div>
+
+          <div v-if="!deadlinePassed" class="deadline">
+            <div class="deadline__text">
+              <p class="deadline__title">
+                Jelentkezési határidő: <strong>október 30.</strong>
+              </p>
+              <p class="deadline__note">
+                A nagy érdeklődés miatt korlátozott számú felmérést tudunk
+                vállalni.
+              </p>
+            </div>
+            <div
+              class="deadline__timer"
+              role="timer"
+              aria-label="A jelentkezési határidőig hátralévő idő"
             >
-              <span class="choice-icon">📝</span>
-              <span class="choice-text">Töltse ki az űrlapot</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- PHONE CARD -->
-        <div v-if="contactMethod === 'phone'" class="contact-section">
-          <div class="phone-card">
-            <div class="phone-card-icon">☎️</div>
-            <h3 class="phone-card-title">Hívjon Minket Most!</h3>
-            <p class="phone-card-subtitle">
-              Beszéljen közvetlenül szakemberrel
-            </p>
-            <a href="tel:+36306308824830" class="phone-button">
-              <span class="phone-icon">📞</span>
-              <span class="phone-number">+36 30 630 882 4830</span>
-            </a>
-            <div class="phone-info">
-              <p><strong>Kedvező időpontban beszélgetünk</strong></p>
-              <p class="small">Helyszíni felmérést egyeztetünk</p>
-            </div>
-            <div class="phone-benefits">
-              <div class="benefit">✓ Azonnali tanácsadás</div>
-              <div class="benefit">✓ Felmérés időpontja</div>
-              <div class="benefit">✓ Finanszírozási kérdések</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FORM -->
-        <div v-if="contactMethod === 'form'" class="contact-section">
-          <form class="appointment-form" @submit="submitForm">
-            <div class="form-section">
-              <h3 class="section-title">Pár kérdés, és visszahívjuk</h3>
-
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong"
-                  >Finanszírozás *</label
-                >
-                <select
-                  v-model="formData.financing"
-                  required
-                  class="form-select"
-                  :disabled="isSubmitting"
-                >
-                  <option value="">Válasszon...</option>
-                  <option value="onero">Teljes önerőből</option>
-                  <option value="tamogatassal">
-                    Támogatással (ha elérhető)
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong"
-                  >Miért gondolkodik napelemben? *</label
-                >
-                <div class="option-grid" role="radiogroup">
-                  <label class="option-pill">
-                    <input
-                      type="checkbox"
-                      name="motivations"
-                      value="anyagi_megtakaritas"
-                      v-model="formData.motivations"
-                      :disabled="isSubmitting"
-                    />
-                    <span class="option-pill__text">Anyagi megtakarítás</span>
-                  </label>
-                  <label class="option-pill">
-                    <input
-                      type="checkbox"
-                      name="motivations"
-                      value="energiaar_emelkedes"
-                      v-model="formData.motivations"
-                      :disabled="isSubmitting"
-                    />
-                    <span class="option-pill__text"
-                      >Félelem az energiaár emelkedésétől</span
-                    >
-                  </label>
-                  <label class="option-pill">
-                    <input
-                      type="checkbox"
-                      name="motivations"
-                      value="bizonytalan_aramellatas"
-                      v-model="formData.motivations"
-                      :disabled="isSubmitting"
-                    />
-                    <span class="option-pill__text"
-                      >Bizonytalan áramellátás</span
-                    >
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">Személyes adatok</h3>
-
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong">Név *</label>
-                <input
-                  type="text"
-                  v-model="formData.name"
-                  required
-                  class="form-input"
-                  placeholder="Teljes név"
-                  :disabled="isSubmitting"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong">Email cím</label>
-                <input
-                  type="email"
-                  v-model="formData.email"
-                  class="form-input"
-                  placeholder="Az árajánlatot ide küldjük"
-                  :disabled="isSubmitting"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong"
-                  >Telefonszám *</label
-                >
-                <input
-                  type="tel"
-                  v-model="formData.phone"
-                  required
-                  class="form-input"
-                  placeholder="Gyors egyeztetéshez"
-                  :disabled="isSubmitting"
-                />
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">Megjegyzés (Opcionális)</h3>
-              <div class="form-group">
-                <label class="supage-content__ul__li__strong"
-                  >További információ</label
-                >
-                <textarea
-                  v-model="formData.message"
-                  class="form-textarea"
-                  placeholder="Írja le az igényeit, kérdéseit..."
-                  rows="4"
-                  :disabled="isSubmitting"
-                ></textarea>
-              </div>
-            </div>
-
-            <button type="submit" class="submit-btn" :disabled="isSubmitting">
-              <span class="btn-text" v-if="!isSubmitting"
-                >Visszahívást kérek</span
+              <div
+                v-for="unit in countdownUnits"
+                :key="unit.label"
+                class="deadline__unit"
               >
-              <span class="btn-text" v-else>Küldés...</span>
+                <span class="deadline__value">{{ unit.value }}</span>
+                <span class="deadline__label">{{ unit.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ŰRLAP -->
+        <div id="ajanlat" ref="formCard" class="form-card">
+          <h2 class="form-card__title">
+            <em>Csökkentse a villanyszámláját saját árammal</em>
+          </h2>
+          <p class="form-card__lead">
+            Ingyenes, kötelezettségmentes felmérés után megmutatjuk, mennyit
+            spórolhat, és mekkora rendszer térül meg Önnél.
+          </p>
+
+          <form class="lead-form" @submit="submitForm">
+            <div class="form-group">
+              <label for="lead-name">Név *</label>
+              <input
+                id="lead-name"
+                type="text"
+                v-model="formData.name"
+                required
+                autocomplete="name"
+                class="form-input"
+                placeholder="Teljes név"
+                :disabled="isSubmitting"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lead-phone">Telefonszám *</label>
+              <input
+                id="lead-phone"
+                type="tel"
+                v-model="formData.phone"
+                required
+                autocomplete="tel"
+                class="form-input"
+                placeholder="+36 30 123 4567"
+                :disabled="isSubmitting"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lead-email">Email cím *</label>
+              <input
+                id="lead-email"
+                type="email"
+                v-model="formData.email"
+                required
+                autocomplete="email"
+                class="form-input"
+                placeholder="Az ajánlatot ide küldjük"
+                :disabled="isSubmitting"
+              />
+            </div>
+
+            <div class="form-group">
+              <span class="form-label">Mi a legfontosabb Önnek? *</span>
+              <div
+                class="option-grid"
+                :class="{ 'option-grid--error': motivationError }"
+              >
+                <label
+                  v-for="option in motivationOptions"
+                  :key="option.value"
+                  class="option-pill"
+                >
+                  <input
+                    type="checkbox"
+                    name="motivations"
+                    :value="option.value"
+                    v-model="formData.motivations"
+                    :disabled="isSubmitting"
+                  />
+                  <span class="option-pill__text">{{ option.label }}</span>
+                </label>
+              </div>
+              <p v-if="motivationError" class="field-error" role="alert">
+                Kérjük, válasszon legalább egyet.
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label for="lead-message"
+                >Megjegyzés <span class="optional">nem kötelező</span></label
+              >
+              <textarea
+                id="lead-message"
+                v-model="formData.message"
+                class="form-textarea"
+                placeholder="Pl. tető típusa, havi fogyasztás, mikor érhető el"
+                rows="2"
+                :disabled="isSubmitting"
+              ></textarea>
+            </div>
+
+            <p v-if="formData.package" class="picked-package">
+              <span>
+                Kiválasztott csomag:
+                <strong>{{ formData.package }}</strong>
+              </span>
+              <button
+                type="button"
+                class="picked-package__clear"
+                aria-label="Csomag törlése"
+                @click="formData.package = ''"
+              >
+                ×
+              </button>
+            </p>
+
+            <button
+              type="submit"
+              class="btn btn--dark btn--block btn--press"
+              :disabled="isSubmitting"
+            >
+              <span v-if="!isSubmitting">Ingyenes felmérést kérek</span>
+              <span v-else>Küldés...</span>
             </button>
+
+            <div
+              v-if="submitMessage"
+              class="submit-message"
+              :class="submitStatus"
+              role="status"
+            >
+              {{ submitMessage }}
+            </div>
 
             <p class="privacy-text">
-              <i class="supage-content__p__i">
-                Az űrlap elküldésével automatikusan elfogadja az
-                <NuxtLink
-                  class="supage-content__nlink"
-                  to="/adatvedelmi-tajekoztato"
-                  >Adatvédelmi Szabályzatot.</NuxtLink
-                >
-              </i>
+              Az űrlap elküldésével elfogadja az
+              <NuxtLink to="/adatvedelmi-tajekoztato"
+                >Adatvédelmi Szabályzatot</NuxtLink
+              >.
             </p>
           </form>
+        </div>
 
-          <div
-            v-if="submitMessage"
-            class="submit-message"
-            :class="{
-              success: submitMessage.includes('✅'),
-              error: submitMessage.includes('❌'),
-            }"
-          >
-            {{ submitMessage }}
+        <div class="hero__media">
+          <NuxtImg
+            src="/img/hero.webp"
+            alt="Család a napelemes rendszerük előtt"
+            class="hero__image"
+            width="1200"
+            height="600"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- BIZALMI SÁV -->
+    <div class="trust-strip dark-surface dark-surface--slim">
+      <ul class="container trust-strip__list">
+        <li v-for="item in trustItems" :key="item">
+          <svg class="icon icon--bolt" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z" />
+          </svg>
+          {{ item }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- ÉRVEK -->
+    <div class="section section--gray">
+      <div class="container">
+        <h2 class="section-heading">Miért minket választanak?</h2>
+        <div class="benefits-grid">
+          <div v-for="benefit in benefits" :key="benefit.title" class="benefit-card">
+            <span class="benefit-card__icon">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <template v-if="benefit.icon === 'sun'">
+                  <circle cx="12" cy="12" r="4" />
+                  <path
+                    d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                  />
+                </template>
+                <template v-else-if="benefit.icon === 'battery'">
+                  <rect x="2" y="7" width="18" height="10" rx="2" />
+                  <path d="M22 11v2M6 10v4M10 10v4" />
+                </template>
+                <template v-else>
+                  <path
+                    d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
+                  />
+                  <path d="M14 3v5h5M9 14l2 2 4-4" />
+                </template>
+              </svg>
+            </span>
+            <h3>{{ benefit.title }}</h3>
+            <p>{{ benefit.text }}</p>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- CSOMAGOK -->
+    <div class="section">
+      <div class="container">
+        <h2 class="section-heading">Válassza ki az Önhöz illő csomagot</h2>
+        <p class="section-lead">
+          3 fázisú hibrid rendszerek Tongwei napelemekkel, Deye hibrid
+          inverterrel és 11,8 kWh akkumulátorral.
+        </p>
+
+        <div class="bill">
+          <label for="bill-range" class="bill__label">
+            Mennyi a havi villanyszámlája?
+          </label>
+          <input
+            id="bill-range"
+            v-model.number="monthlyBill"
+            type="range"
+            min="10000"
+            max="100000"
+            step="1000"
+            class="bill__range"
+            :style="{ '--fill': ((monthlyBill - 10000) / 90000) * 100 + '%' }"
+          />
+          <output for="bill-range" class="bill__value">
+            {{ formatNumber(monthlyBill) }} Ft
+          </output>
+        </div>
+
+        <div class="packages" role="radiogroup" aria-label="Csomagok">
+          <button
+            v-for="pkg in packages"
+            :key="pkg.kw"
+            type="button"
+            role="radio"
+            class="package"
+            :class="{ 'package--active': pkg.kw === activePackage.kw }"
+            :aria-checked="pkg.kw === activePackage.kw"
+            @click="pickedKw = pkg.kw"
+          >
+            <span v-if="pkg.kw === recommendedKw" class="package__badge">
+              Önnek ajánlott
+            </span>
+            <span
+              v-else-if="pkg.popular"
+              class="package__badge package__badge--muted"
+            >
+              Legnépszerűbb
+            </span>
+            <span class="package__size">
+              {{ pkg.kw }}<small>kWp</small>
+            </span>
+            <span class="package__fit">{{ pkg.fit }}</span>
+            <span class="package__price">
+              {{ formatNumber(pkg.price) }} Ft
+            </span>
+          </button>
+        </div>
+
+        <div class="estimate dark-surface">
+          <div class="estimate__head">
+            <p class="eyebrow eyebrow--light">Becsült megtakarítás</p>
+            <p class="estimate__title">
+              {{ activePackage.kw }} kWp csomag –
+              {{ formatNumber(monthlyBill) }} Ft-os havi számlánál
+            </p>
+          </div>
+          <dl class="estimate__stats">
+            <div>
+              <dt>Éves megtakarítás</dt>
+              <dd>kb. {{ formatNumber(estimate.saving) }} Ft</dd>
+            </div>
+            <div>
+              <dt>Megtérülés</dt>
+              <dd v-if="estimate.payback <= 15">
+                kb. {{ Math.round(estimate.payback) }} év
+              </dd>
+              <dd v-else class="estimate__soft">egyedi ajánlat alapján</dd>
+            </div>
+            <div>
+              <dt>Éves termelés</dt>
+              <dd>kb. {{ formatNumber(estimate.production) }} kWh</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            class="btn btn--primary"
+            @click="requestPackage"
+          >
+            Ajánlatot kérek erre a csomagra
+          </button>
+        </div>
+
+        <div class="package-includes">
+          <h3 class="package-includes__title">Minden csomag tartalmazza</h3>
+          <ul class="package-includes__list">
+            <li v-for="feature in packageFeatures" :key="feature">
+              <svg class="icon icon--check" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              {{ feature }}
+            </li>
+          </ul>
+        </div>
+
+        <p class="fine-print">
+          A feltüntetett árak tájékoztató jellegű bruttó árak, a végleges
+          ajánlatot a helyszíni felmérés után adjuk. A megtakarítás becslés:
+          1&nbsp;100 kWh/kWp éves termeléssel, a mai lakossági áramárakkal (36,
+          illetve 70 Ft/kWh), 5 Ft/kWh átvételi árral és 80%-os saját
+          felhasználással számol.
+        </p>
+      </div>
+    </div>
+
+    <!-- FOLYAMAT -->
+    <div class="section section--dark dark-surface">
+      <div class="container process">
+        <div class="process__intro">
+          <p class="eyebrow eyebrow--light">Így dolgozunk</p>
+          <h2 class="process__title">
+            Négy lépés a <span class="mark-text">saját áramig</span>
+          </h2>
+          <p class="process__lead">
+            Átlátható folyamat, meglepetések nélkül: minden lépésnél tudja, mi
+            történik, és mi következik.
+          </p>
+          <button type="button" class="btn btn--primary" @click="scrollToForm">
+            Ingyenes felmérést kérek
+          </button>
+        </div>
+
+        <ol class="process-steps">
+          <li v-for="(step, index) in steps" :key="step.title" class="process-step">
+            <span class="step-number">0{{ index + 1 }}</span>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.text }}</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- GYIK -->
+    <div class="section section--gray">
+      <div class="container container--narrow">
+        <h2 class="section-heading">Amit a legtöbben kérdeznek</h2>
+        <div class="faq-list">
+          <details
+            v-for="(faq, index) in faqs"
+            :key="faq.q"
+            class="faq-item"
+            :ref="(el) => (faqRefs[index] = el)"
+            @toggle="handleFaqToggle(index)"
+          >
+            <summary class="faq-question">
+              <span class="faq-title">{{ faq.q }}</span>
+              <span class="faq-icon" aria-hidden="true"></span>
+            </summary>
+            <p class="faq-text">{{ faq.a }}</p>
+          </details>
+        </div>
+        <div class="section-cta">
+          <button
+            type="button"
+            class="btn btn--dark btn--press"
+            @click="scrollToForm"
+          >
+            Ingyenes felmérést kérek
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LÁBLÉC -->
+    <div class="site-foot dark-surface dark-surface--slim">
+      <div class="container site-foot__inner">
+        <img
+          src="/img/logo-szatmar-solar.png"
+          alt="Szatmár Solar"
+          class="brand-logo brand-logo--small"
+          width="428"
+          height="176"
+          loading="lazy"
+        />
+        <div class="site-foot__links">
+          <a href="tel:+36308360703">+36 30 836 0703</a>
+          <NuxtLink to="/adatvedelmi-tajekoztato">Adatvédelem</NuxtLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBIL CTA SÁV -->
+    <div class="mobile-cta" :class="{ 'mobile-cta--hidden': formInView }">
+      <a href="tel:+36308360703" class="btn btn--ghost">Hívás</a>
+      <button type="button" class="btn btn--dark" @click="scrollToForm">
+        Ingyenes felmérést kérek
+      </button>
     </div>
   </section>
 </template>
 
 <style scoped>
-/* Header és footer elrejtése */
-header,
-footer,
-.header,
-.footer,
-nav,
-.navbar,
-.site-header,
-.site-footer {
-  display: none !important;
-}
-
-body > header,
-body > footer {
-  display: none !important;
-}
-
 .visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -784,868 +872,762 @@ body > footer {
 
 :global(html),
 :global(body) {
-  background: #0a0a0a;
+  background: #fff;
 }
 
 :global(body) {
   min-height: 100vh;
 }
 
-.subpage-content {
-  padding: 3em;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  background:
-    radial-gradient(
-      1200px 600px at 20% 0%,
-      rgba(255, 218, 51, 0.14),
-      transparent 55%
-    ),
-    radial-gradient(
-      900px 500px at 90% 10%,
-      rgba(255, 218, 51, 0.08),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #0a0a0a 0%, #111 100%);
-  --accent: #ffda33;
-  --panel: rgba(255, 255, 255, 0.06);
-  --panel-border: rgba(255, 255, 255, 0.14);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.72);
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-.subpage-content::before,
-.subpage-content::after {
-  content: '';
-  position: absolute;
-  inset: auto;
-  width: 520px;
-  height: 520px;
-  border-radius: 50%;
-  background: rgba(255, 218, 51, 0.22);
-  filter: blur(90px);
-  opacity: 0.9;
-  pointer-events: none;
-  z-index: 0;
-  animation: glowFloat 12s ease-in-out infinite;
-}
-
-.subpage-content::before {
-  top: -160px;
-  left: -180px;
-}
-
-.subpage-content::after {
-  bottom: -220px;
-  right: -220px;
-  width: 620px;
-  height: 620px;
-  background: rgba(255, 218, 51, 0.14);
-  animation-duration: 16s;
-}
-
-.subpage-content > * {
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes glowFloat {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(35px, 18px, 0) scale(1.05);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-/* ========== HERO BANNER ========== */
-.trust-banner {
-  position: relative;
-  border-radius: 15px;
-  margin-bottom: 40px;
-  overflow: hidden;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  transform: translateZ(0);
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
-}
-
-.trust-banner:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.6);
-}
-
-.trust-banner--with-image {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
-}
-
-.banner-bg-image {
-  position: relative;
-  width: 100%;
-  height: auto;
-  overflow: hidden;
-  z-index: 1;
-  display: block;
-}
-
-.banner-image {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-  opacity: 1;
-}
-
-.banner-content {
-  position: relative;
-  z-index: 3;
-  text-align: center;
-  padding: 3.5em 2em;
-  width: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
-  backdrop-filter: blur(10px);
-}
-
-.choice-btn:active {
-  transform: translateY(-1px);
-}
-
-.main-title {
-  font-size: 2.2rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: center;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.5px;
-}
-
-.banner-subtitle {
-  font-size: 1.1rem;
-  text-align: center;
-  color: #fff;
-  margin-bottom: 15px;
-  opacity: 0.95;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.banner-value-prop {
-  font-size: 1rem;
-  color: #fff;
+.lp {
+  /* Márkaszínek a logóból: fekete, napsárga, törtfehér – fehér alapon */
+  --accent: #ffd833;
+  --accent-bright: #ffe266;
+  --accent-soft: rgba(255, 216, 51, 0.2);
+  --ink: #0b0b0c;
+  --cream: #f5f1e8;
+  --panel: #f6f6f4;
+  --panel-border: #e5e5e1;
+  --field-border: #d4d4cf;
+  --text: #141517;
+  --muted: #5d6068;
+  --shadow-sm: 0 1px 2px rgba(11, 11, 12, 0.04),
+    0 6px 18px rgba(11, 11, 12, 0.05);
+  --shadow-md: 0 2px 4px rgba(11, 11, 12, 0.04),
+    0 18px 44px rgba(11, 11, 12, 0.1);
+  background: #fff;
+  color: var(--text);
   line-height: 1.6;
-  margin-bottom: 25px;
-  opacity: 0.95;
 }
 
-.social-proof {
-  display: flex;
+.lp h1,
+.lp h2,
+.lp h3,
+.lp p,
+.lp ul,
+.lp ol {
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.container--narrow {
+  max-width: 760px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ========== GOMBOK ========== */
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 9px 12px;
-  margin: 12px auto 14px auto;
-  width: fit-content;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  gap: 10px;
+  padding: 16px 30px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.rating {
+.btn--primary {
+  background: var(--accent);
+  color: var(--text);
+  box-shadow: 0 10px 24px rgba(255, 216, 51, 0.45);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(255, 216, 51, 0.55);
+}
+
+.btn--primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn--dark {
+  background: var(--ink);
+  color: var(--accent);
+  box-shadow: 0 5px 0 var(--accent);
+}
+
+.btn--dark:hover:not(:disabled) {
+  background: #1d1d20;
+}
+
+.btn--dark:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--accent);
+}
+
+.btn--dark:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ismétlődő „megnyomás”: gyors lenyomás a sárga peremre, rövid tartás,
+   visszapattanás – közben érintés-hullám fut szét a gombon */
+.btn--press {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn--press:not(:disabled) {
+  box-shadow: 0 7px 0 var(--accent);
+  animation: btnPress 2.4s infinite;
+}
+
+.btn--press::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: rgba(255, 216, 51, 0.38);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.btn--press:not(:disabled)::after {
+  animation: btnTap 2.4s infinite;
+}
+
+.btn--press:hover:not(:disabled),
+.btn--press:hover:not(:disabled)::after {
+  animation-play-state: paused;
+}
+
+.btn--press:active:not(:disabled) {
+  animation: none;
+  transform: translateY(6px) scale(0.975);
+  box-shadow: 0 1px 0 var(--accent);
+}
+
+@keyframes btnPress {
+  0%,
+  58% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 7px 0 var(--accent);
+    animation-timing-function: cubic-bezier(0.5, 0, 1, 0.6);
+  }
+  64%,
+  74% {
+    transform: translateY(6px) scale(0.975);
+    box-shadow: 0 1px 0 var(--accent);
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  }
+  84% {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 9px 0 var(--accent);
+  }
+  92%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 7px 0 var(--accent);
+  }
+}
+
+@keyframes btnTap {
+  0%,
+  62% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  64% {
+    transform: scale(0.2);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: scale(4.5);
+    opacity: 0;
+  }
+}
+
+.btn--ghost {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--field-border);
+}
+
+.btn--ghost:hover {
+  border-color: var(--text);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* ========== SÖTÉT, PÖTTYÖS FELÜLET ========== */
+.dark-surface {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.dark-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      420px 260px at 12% 0%,
+      rgba(255, 216, 51, 0.28),
+      transparent 70%
+    ),
+    radial-gradient(
+      420px 260px at 90% 100%,
+      rgba(255, 216, 51, 0.18),
+      transparent 70%
+    ),
+    radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) 0 0 /
+      22px 22px;
+  pointer-events: none;
+}
+
+/* keskeny sávokon visszafogottabb fény */
+.dark-surface--slim::before {
+  background:
+    radial-gradient(
+      360px 120px at 8% 0%,
+      rgba(255, 216, 51, 0.2),
+      transparent 70%
+    ),
+    radial-gradient(
+      360px 120px at 94% 100%,
+      rgba(255, 216, 51, 0.14),
+      transparent 70%
+    ),
+    radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.2px) 0 0 /
+      22px 22px;
+}
+
+.dark-surface > * {
+  position: relative;
+}
+
+/* ========== FELSŐ SÁV ========== */
+.topbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.brand-logo {
+  display: block;
+  height: 58px;
+  width: auto;
+}
+
+/* a logó fekete háttere beleolvad a pöttyös felületbe */
+.dark-surface .brand-logo {
+  mix-blend-mode: lighten;
+}
+
+.brand-logo--small {
+  height: 50px;
+}
+
+.topbar__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.topbar__phone .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.topbar__phone:hover {
+  background: var(--accent-bright);
+}
+
+/* ========== HERO ========== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 0 76px;
+  background: linear-gradient(180deg, #fff 0%, #fffdf2 100%);
+}
+
+/* felkelő nap az űrlap mögött: sárga korong, halvány gyűrűkkel */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -300px;
+  right: -240px;
+  width: 900px;
+  height: 900px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 216, 51, 0.6) 0,
+      rgba(255, 216, 51, 0.32) 26%,
+      rgba(255, 216, 51, 0.12) 48%,
+      transparent 68%
+    ),
+    repeating-radial-gradient(
+      circle,
+      transparent 0 62px,
+      rgba(255, 216, 51, 0.55) 62px 64px
+    );
+  -webkit-mask-image: radial-gradient(circle, #000 22%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 22%, transparent 68%);
+  pointer-events: none;
+}
+
+/* kifelé sugárzó körök a nap középpontjából */
+.hero__waves {
+  position: absolute;
+  top: -300px;
+  right: -240px;
+  width: 900px;
+  height: 900px;
+  pointer-events: none;
+}
+
+.hero__waves span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 216, 51, 0.9);
+  opacity: 0;
+  transform: scale(0.2);
+  will-change: transform, opacity;
+  animation: sunWave 7.5s linear infinite;
+}
+
+.hero__waves span:nth-child(2) {
+  animation-delay: -2.5s;
+}
+
+.hero__waves span:nth-child(3) {
+  animation-delay: -5s;
+}
+
+@keyframes sunWave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__waves span,
+  .btn--press:not(:disabled),
+  .btn--press:not(:disabled)::after {
+    animation: none;
+  }
+}
+
+/* pontrács és halvány fény bal alul */
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60%;
+  height: 70%;
+  background:
+    radial-gradient(
+      closest-side at 12% 92%,
+      rgba(255, 216, 51, 0.26),
+      transparent
+    ),
+    radial-gradient(rgba(11, 11, 12, 0.14) 1.2px, transparent 1.2px) 0 0 / 22px
+      22px;
+  -webkit-mask-image: radial-gradient(
+    ellipse at 0% 100%,
+    #000 10%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(ellipse at 0% 100%, #000 10%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    'text form'
+    'media form';
+  column-gap: 56px;
+  row-gap: 32px;
+  align-items: start;
+}
+
+.hero__text {
+  grid-area: text;
+}
+
+.hero__media {
+  grid-area: media;
+}
+
+.eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-}
-
-.rating-score {
-  color: var(--accent);
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  font-size: 0.98rem;
-}
-
-.stars {
-  display: inline-flex;
-  gap: 3px;
-  line-height: 1;
-}
-
-.star {
-  color: var(--accent);
-  font-size: 0.95rem;
-}
-
-.star--half {
-  position: relative;
-  color: rgba(255, 218, 51, 0.35);
-}
-
-.star--half::before {
-  content: '★';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 50%;
-  overflow: hidden;
-  color: var(--accent);
-}
-
-.rating-text {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.proof-metrics {
-  display: inline-flex;
-  align-items: center;
-}
-
-.metric {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  padding-left: 14px;
-  border-left: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.metric-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   color: var(--text);
-  font-weight: 800;
-  font-size: 0.95rem;
+  margin-bottom: 14px !important;
 }
 
-.metric-label {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-/* ========== 3 KIEMELT ÉRVELÉS ========== */
-.benefits-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
-  margin: 45px 0 50px 0;
-  padding: 0;
-}
-
-.benefit-card {
-  background: var(--panel);
-  padding: 28px;
-  border-radius: 10px;
-  border-left: 6px solid var(--accent);
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
-  transform: translateZ(0);
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease,
-    background 0.35s ease;
-}
-
-.benefit-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.benefit-card h3 {
-  color: var(--accent);
-  font-size: 1.15rem;
-  margin-bottom: 15px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.benefit-card p {
-  color: var(--muted);
-  line-height: 1.6;
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.benefit-card strong {
-  color: var(--text);
-  font-weight: 700;
-}
-
-/* ========== BIZALOM MODUL ========== */
-.trust-module {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
-  margin: 4em 0;
-  padding: 0;
-}
-
-.trust-item {
-  background: var(--panel);
-  padding: 25px;
-  border-radius: 10px;
-  border-left: 5px solid var(--accent);
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
-  display: flex;
-  gap: 15px;
-}
-
-.trust-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.trust-content h4 {
-  color: var(--accent);
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-}
-
-.trust-content p {
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ========== PROCESS SECTION ========== */
-.process-section {
-  margin: 4em 0;
-}
-
-.process-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 25px;
-  margin-top: 30px;
-}
-
-.process-step {
-  background: var(--panel);
-  padding: 25px;
-  border-radius: 10px;
-  border-top: 5px solid var(--accent);
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
-  text-align: center;
-}
-
-.step-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 3px;
+  border-radius: 3px;
   background: var(--accent);
-  color: #000;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 15px;
 }
 
-.process-step h4 {
-  color: var(--accent);
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin: 0 0 10px 0;
+/* szövegkiemelő hatás a címsor kulcsszaván */
+.mark {
+  background: linear-gradient(
+    to top,
+    var(--accent) 0,
+    var(--accent) 38%,
+    transparent 38%
+  );
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: 2px;
 }
 
-.process-step p {
+.hero__title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+  text-wrap: balance;
+}
+
+.hero__lead {
+  margin-top: 18px !important;
+  font-size: 1.12rem;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
+  max-width: 34em;
 }
 
-/* ========== INCLUDES SECTION ========== */
-.includes-section {
-  margin: 4em 0;
-}
-
-.includes-grid {
+.check-list {
+  list-style: none;
+  margin-top: 26px !important;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 15px;
-  margin-top: 25px;
-}
-
-.include-item {
-  background: var(--panel);
-  padding: 18px;
-  border-radius: 8px;
-  border-left: 4px solid var(--accent);
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(12px);
-  display: flex;
   gap: 12px;
-  font-size: 0.95rem;
-  color: var(--text);
 }
 
-.include-check {
-  color: var(--accent);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-/* ========== SECTION HEADING ========== */
-.section-heading {
-  color: var(--accent);
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 1.5em 0 1.5em 0;
-  text-align: center;
-}
-
-/* ========== CLOSING CTA SECTION ========== */
-.closing-cta-section {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 218, 51, 0.12) 0%,
-      rgba(0, 0, 0, 0.65) 65%
-    ),
-    var(--panel);
-  color: var(--text);
-  padding: 40px 30px;
-  border-radius: 15px;
-  text-align: center;
-  margin: 3em 0;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(14px);
-}
-
-.closing-cta-section .section-heading {
-  color: #fff;
-  margin-top: 0;
-}
-
-.closing-message {
-  font-size: 1.05rem;
-  line-height: 1.6;
-  margin-bottom: 30px;
-  opacity: 0.95;
-}
-
-/* ========== CONTACT CHOICE ========== */
-.contact-choice {
-  background: var(--panel);
-  padding: 40px 30px;
-  border-radius: 15px;
-  text-align: center;
-  margin: 2.5em auto;
-  max-width: 900px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(14px);
-}
-
-.choice-intro {
-  color: var(--accent);
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 0 0 30px 0;
-}
-
-.choice-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.choice-btn {
+.check-list li {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.icon--check {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ink);
+  stroke-width: 3.5;
+  margin-top: 2px;
+}
+
+.proof {
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 25px 20px;
-  border: 1px solid var(--panel-border);
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  gap: 14px;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.proof__value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.proof__label {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 16em;
+  line-height: 1.4;
+}
+
+/* ========== HATÁRIDŐ ========== */
+.deadline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 24px;
+  margin-top: 26px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      260px 120px at 100% 0%,
+      rgba(255, 216, 51, 0.22),
+      transparent 70%
+    ),
+    var(--ink);
+  color: var(--cream);
+}
+
+.deadline__title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text);
-  backdrop-filter: blur(10px);
+  line-height: 1.35;
 }
 
-.choice-btn:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+.deadline__title strong {
+  color: var(--accent);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.choice-btn.active {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 218, 51, 0.18) 0%,
-      rgba(0, 0, 0, 0.35) 55%
-    ),
-    rgba(0, 0, 0, 0.25);
-  color: var(--text);
-  border-color: var(--accent);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+.deadline__note {
+  margin-top: 4px !important;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(245, 241, 232, 0.7);
 }
 
-.choice-icon {
-  font-size: 2rem;
+.deadline__timer {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.choice-text {
-  text-align: center;
-  line-height: 1.3;
-}
-
-/* ========== CONTACT SECTION ========== */
-.contact-section {
-  margin: 2em auto;
-  max-width: 900px;
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========== PHONE CARD ========== */
-.phone-card {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 218, 51, 0.12) 0%,
-      rgba(0, 0, 0, 0.8) 70%
-    ),
-    var(--panel);
-  padding: 45px 35px;
-  border-radius: 15px;
-  text-align: center;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  color: var(--text);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(14px);
-}
-
-.phone-card-icon {
-  font-size: 3.5rem;
-  margin-bottom: 15px;
-}
-
-.phone-card-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #fff;
-}
-
-.phone-card-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
-  margin: 0 0 30px 0;
-}
-
-.phone-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: var(--accent);
-  color: #000;
-  padding: 18px 35px;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 1.15rem;
-  margin: 0 0 30px 0;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-  border: none;
-  cursor: pointer;
-}
-
-.phone-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  background: #f0f0f0;
-}
-
-.phone-button:active {
-  transform: translateY(-1px);
-}
-
-.phone-icon {
-  font-size: 1.4rem;
-}
-
-.phone-number {
-  letter-spacing: 0.5px;
-}
-
-.phone-info {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 18px 16px;
-  border-radius: 10px;
-  margin-bottom: 25px;
-}
-
-.phone-info p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.phone-info p strong {
-  display: block;
-  font-weight: 700;
-}
-
-.phone-info p.small {
-  font-size: 0.85rem;
-  opacity: 0.9;
-  margin-top: 6px;
-}
-
-.phone-benefits {
+.deadline__unit {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.phone-benefits .benefit {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: #fff;
-}
-
-/* ========== FORM STYLES ========== */
-.appointment-form {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.submit-message {
-  padding: 18px;
+  align-items: center;
+  min-width: 52px;
+  padding: 8px 6px 7px;
   border-radius: 10px;
-  margin-top: 20px;
-  font-weight: bold;
-  text-align: center;
-  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.submit-message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 2px solid #c3e6cb;
-}
-
-.submit-message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 2px solid #f5c6cb;
-}
-
-.form-section {
-  background: var(--panel);
-  padding: 28px;
-  margin: 2.5em 0;
-  border-radius: 12px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  border-left: 5px solid var(--accent);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(14px);
-}
-
-.section-title {
+.deadline__value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.1;
   color: var(--accent);
-  font-size: 1.35rem;
-  margin-bottom: 25px;
-  border-bottom: 3px solid var(--accent);
-  padding-bottom: 12px;
-  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.deadline__label {
+  margin-top: 3px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(245, 241, 232, 0.7);
+}
+
+.hero__media {
+  position: relative;
+  margin: 0 22px 22px 0;
+}
+
+/* eltolt fekete blokk a kép mögött */
+.hero__media::before {
+  content: '';
+  position: absolute;
+  inset: 22px -22px -22px 22px;
+  border-radius: 18px;
+  background: var(--ink);
+}
+
+.hero__image {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+/* ========== ŰRLAP ========== */
+.form-card {
+  grid-area: form;
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  border-top: 5px solid var(--accent);
+  border-radius: 14px;
+  padding: 30px 28px 26px;
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  scroll-margin-top: 16px;
+}
+
+.form-card__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.form-card__title em {
+  font-style: italic;
+}
+
+.form-card__lead {
+  margin-top: 6px !important;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.lead-form {
+  margin-top: 22px;
 }
 
 .form-group {
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
-.form-group label {
+.form-group label,
+.form-label {
   display: block;
-  margin-bottom: 8px;
-  color: var(--text);
+  margin-bottom: 6px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+}
+
+.optional {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.82rem;
+  margin-left: 4px;
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 13px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 13px 14px;
+  border: 1px solid var(--field-border);
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 16px;
   font-family: inherit;
-  transition: all 0.3s;
-  background-color: rgba(0, 0, 0, 0.35);
+  background: #fff;
   color: var(--text);
-  backdrop-filter: blur(8px);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-textarea {
+  resize: vertical;
 }
 
 .form-input::placeholder,
 .form-textarea::placeholder {
-  color: #999;
-}
-
-.form-select {
-  width: 100%;
-  padding: 13px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  background-color: rgba(0, 0, 0, 0.35);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  color: var(--text);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffda33' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 18px;
-  padding-right: 45px;
+  color: #9aa0a9;
 }
 
 .form-input:focus,
 .form-textarea:focus {
-  border-color: var(--accent);
+  border-color: var(--text);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(255, 218, 51, 0.18);
-}
-
-.form-select:focus {
-  border-color: var(--accent);
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(255, 218, 51, 0.18);
-}
-
-.form-select:hover:not(:disabled) {
-  border-color: var(--accent);
-  background-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 4px rgba(255, 216, 51, 0.55);
 }
 
 .form-input:disabled,
-.form-textarea:disabled,
-.form-select:disabled {
-  background-color: rgba(0, 0, 0, 0.25);
-  opacity: 0.55;
+.form-textarea:disabled {
+  background: var(--panel);
+  opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* ========== SUBMIT BUTTON ========== */
-.submit-btn {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  padding: 18px 45px;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.3s ease;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  margin-top: 15px;
-  animation: ctaPulse 1.9s ease-in-out infinite;
-  position: sticky;
-  bottom: 14px;
-  z-index: 3;
-  will-change: transform;
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
-  background: #ffd44a;
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.99);
-}
-
-.submit-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
-  animation: none;
-}
-
-@keyframes ctaPulse {
-  0% {
-    transform: translateY(0);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  }
-  55% {
-    transform: translateY(-2px);
-    box-shadow:
-      0 26px 75px rgba(0, 0, 0, 0.65),
-      0 0 0 6px rgba(255, 218, 51, 0.12);
-  }
-  100% {
-    transform: translateY(0);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
-  }
 }
 
 .option-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-grid--error .option-pill {
+  border-color: #c0392b;
+}
+
+.field-error {
+  margin-top: 8px !important;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c0392b;
 }
 
 .option-pill {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(10px);
+  display: inline-flex;
+  margin: 0 !important;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--field-border);
+  background: #fff;
   cursor: pointer;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
     background 0.2s ease,
     border-color 0.2s ease;
 }
@@ -1657,83 +1639,630 @@ body > footer {
 }
 
 .option-pill__text {
-  color: var(--text);
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-align: center;
+  font-weight: 600;
+  font-size: 0.88rem;
 }
 
 .option-pill:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
-  border-color: var(--accent);
+  border-color: var(--text);
 }
 
 .option-pill:has(input:checked) {
-  border-color: var(--accent);
-  background: rgba(255, 218, 51, 0.14);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.6);
+  border-color: var(--text);
+  background: var(--accent);
 }
 
-.btn-text {
-  font-size: 1.05rem;
-  letter-spacing: 0.5px;
+.option-pill:has(input:focus-visible) {
+  box-shadow: 0 0 0 4px rgba(255, 216, 51, 0.55);
 }
 
-/* ========== PRIVACY TEXT ========== */
+.submit-message {
+  padding: 14px;
+  border-radius: 8px;
+  margin-top: 14px;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.submit-message.success {
+  background-color: #e6f4ea;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.submit-message.error {
+  background-color: #fbeaec;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
 .privacy-text {
   color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: 15px;
+  font-size: 0.8rem;
+  margin-top: 10px !important;
   text-align: center;
 }
 
 .privacy-text a {
-  color: var(--accent);
-  text-decoration: none;
+  color: var(--text);
   font-weight: 600;
-  transition: color 0.3s;
-}
-
-.privacy-text a:hover {
-  color: #ffd44a;
   text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
-/* ========== FAQ SECTION ========== */
-.faq-section {
-  margin: 3em 0;
+/* ========== BIZALMI SÁV ========== */
+.trust-strip__list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 28px;
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  margin: 0 auto !important;
 }
 
-.faq-list {
+.trust-strip__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.icon--bolt {
+  width: 18px;
+  height: 18px;
+  fill: var(--accent);
+  stroke: none;
+}
+
+/* ========== SZEKCIÓK ========== */
+.section {
+  padding: 72px 0;
+}
+
+.section--gray {
+  background: var(--panel);
+}
+
+.section-heading {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin: 16px auto 0;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.section-cta {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* ========== ÉRVEK ========== */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.benefit-card {
+  position: relative;
+  background: #fff;
+  padding: 30px 28px;
+  border-radius: 14px;
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.benefit-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.benefit-card:hover::before {
+  transform: scaleX(1);
+}
+
+.benefit-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+.benefit-card__icon .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.benefit-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.benefit-card p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.96rem;
+}
+
+/* ========== CSOMAGOK ========== */
+.section-lead {
+  max-width: 40em;
+  margin: 18px auto 0 !important;
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.bill {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 24px;
+  margin-top: 40px;
+  padding: 22px 26px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+}
+
+.bill__label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.bill__value {
+  min-width: 5.6em;
+  text-align: right;
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.bill__range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 8px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--fill, 0%),
+    var(--field-border) var(--fill, 0%)
+  );
+  cursor: pointer;
+}
+
+.bill__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 4px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(11, 11, 12, 0.25);
+}
+
+.bill__range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 4px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(11, 11, 12, 0.25);
+}
+
+.bill__range:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 6px;
+}
+
+.packages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.package {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  margin-top: 30px;
-}
-
-.faq-item {
-  background: var(--panel);
-  border-radius: 10px;
-  border-left: 5px solid var(--accent);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+  align-items: flex-start;
+  gap: 6px;
+  padding: 30px 18px 20px;
+  border-radius: 14px;
+  background: #fff;
   border: 1px solid var(--panel-border);
-  backdrop-filter: blur(14px);
-  transition: all 0.25s ease;
-  overflow: hidden;
-  width: 100%;
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.faq-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.55);
+.package:hover {
+  transform: translateY(-3px);
+  border-color: var(--text);
+}
+
+.package:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.package--active {
+  border-color: var(--ink);
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 8px 0 var(--accent);
+}
+
+.package__badge {
+  position: absolute;
+  top: -11px;
+  left: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.package__badge--muted {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.package__size {
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.package__size small {
+  margin-left: 5px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.package__fit {
+  min-height: 2.9em;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.package__price {
+  margin-top: 6px;
+  padding-top: 12px;
+  width: 100%;
+  border-top: 1px solid var(--panel-border);
+  font-size: 1.12rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.estimate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px 36px;
+  margin-top: 30px;
+  padding: 30px 32px;
+  border-radius: 18px;
+}
+
+.estimate__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.estimate__stats {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.estimate__stats > div {
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.estimate__stats dt {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(245, 241, 232, 0.7);
+}
+
+.estimate__stats dd {
+  margin: 6px 0 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.estimate__stats dd.estimate__soft {
+  font-size: 1.05rem;
+  color: var(--cream);
+}
+
+.estimate .btn {
+  grid-row: 1;
+  grid-column: 2;
+  box-shadow: none;
+}
+
+.estimate .btn:focus-visible {
+  outline-color: #fff;
+}
+
+.package-includes {
+  margin-top: 34px;
+}
+
+.package-includes__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.package-includes__list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin-top: 16px !important;
+}
+
+.package-includes__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.fine-print {
+  margin-top: 26px !important;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.picked-package {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px !important;
+  padding: 10px 12px 10px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.picked-package__clear {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.picked-package__clear:hover {
+  background: rgba(11, 11, 12, 0.1);
+}
+
+/* ========== FOLYAMAT ========== */
+.process {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 64px;
+  align-items: center;
+}
+
+.eyebrow--light {
+  color: var(--cream);
+}
+
+.process__title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.mark-text {
+  color: var(--accent);
+}
+
+.process__lead {
+  margin: 16px 0 30px !important;
+  color: rgba(245, 241, 232, 0.75);
+  font-size: 1.05rem;
+  max-width: 26em;
+}
+
+.section--dark .btn--primary {
+  box-shadow: none;
+}
+
+.section--dark .btn:focus-visible {
+  outline-color: #fff;
+}
+
+.process-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.process-step {
+  position: relative;
+  padding: 26px 26px 28px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.process-step:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+/* a szám után kifutó vonal */
+.step-number::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 216, 51, 0.6),
+    transparent
+  );
+}
+
+.process-step h3 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.process-step p {
+  margin-top: 8px;
+  color: rgba(245, 241, 232, 0.72);
+  font-size: 0.94rem;
+}
+
+/* az utolsó lépés a cél: sárga kártya */
+.process-step:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.process-step:last-child:hover {
+  background: var(--accent-bright);
+}
+
+.process-step:last-child .step-number,
+.process-step:last-child h3 {
+  color: var(--ink);
+}
+
+.process-step:last-child .step-number::after {
+  background: linear-gradient(to right, rgba(11, 11, 12, 0.5), transparent);
+}
+
+.process-step:last-child p {
+  color: rgba(11, 11, 12, 0.78);
+}
+
+/* ========== GYIK ========== */
+.faq-list {
+  margin-top: 36px;
+  background: #fff;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.faq-item + .faq-item {
+  border-top: 1px solid var(--panel-border);
 }
 
 .faq-question {
   list-style: none;
   cursor: pointer;
-  padding: 20px 22px;
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1744,18 +2273,30 @@ body > footer {
   display: none;
 }
 
+.faq-item[open] {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
 .faq-title {
-  color: var(--accent);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.4;
+  transition: color 0.2s ease;
 }
 
 .faq-icon {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   position: relative;
+  border-radius: 50%;
+  background: var(--panel);
+  transition: background 0.2s ease;
+}
+
+.faq-question:hover .faq-icon,
+.faq-item[open] .faq-icon {
+  background: var(--accent);
 }
 
 .faq-icon::before,
@@ -1764,9 +2305,9 @@ body > footer {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 11px;
+  width: 12px;
   height: 2px;
-  background: var(--accent);
+  background: var(--text);
   transform: translate(-50%, -50%);
   border-radius: 2px;
   transition: transform 0.2s ease;
@@ -1780,137 +2321,243 @@ body > footer {
   transform: translate(-50%, -50%) rotate(0deg);
 }
 
-.faq-item[open] .faq-question {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.faq-answer {
-  padding: 17px 22px 18px 22px;
-}
-
 .faq-text {
+  padding: 0 22px 20px !important;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* ========== LÁBLÉC ========== */
+
+.site-foot__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.site-foot__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.site-foot__links a {
+  color: var(--cream);
+}
+
+.site-foot__links a:hover {
+  color: var(--accent);
+}
+
+/* ========== MOBIL CTA SÁV ========== */
+.mobile-cta {
+  display: none;
 }
 
 /* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-  .choice-buttons {
+@media (max-width: 960px) {
+  .hero {
+    padding: 36px 0 52px;
+  }
+
+  .hero::before,
+  .hero__waves {
+    top: -260px;
+    right: -320px;
+    width: 720px;
+    height: 720px;
+  }
+
+  .trust-strip__list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero__grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'text'
+      'form'
+      'media';
   }
 
-  .choice-btn {
-    padding: 20px 15px;
-  }
-
-  .phone-card {
-    padding: 30px 25px;
-  }
-
-  .phone-card-icon {
-    font-size: 2.5rem;
-  }
-
-  .phone-button {
-    padding: 16px 28px;
-    font-size: 1rem;
-  }
-
-  .main-title {
-    font-size: 1.8rem;
-  }
-
-  .banner-subtitle {
-    font-size: 0.95rem;
-  }
-
-  .banner-content {
-    padding: 2.5em 1.5em;
+  .hero__title {
+    font-size: 2.1rem;
   }
 
   .benefits-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .benefit-card {
-    padding: 20px;
-  }
-
-  .form-section {
-    padding: 20px;
-  }
-
-  .section-heading {
-    font-size: 1.6rem;
-  }
-
-  .section-title {
-    font-size: 1.15rem;
-  }
-
-  .subpage-content {
-    padding: 1.5em;
-  }
-
-  .option-grid {
+  .process {
     grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .bill {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bill__range {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .packages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 22px;
+  }
+
+  .estimate {
+    grid-template-columns: 1fr;
+    padding: 26px 22px;
+  }
+
+  .estimate .btn {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .package-includes__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .process__title {
+    font-size: 1.9rem;
+  }
+
+  .section {
+    padding: 52px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .lp {
+    padding-bottom: 84px;
+  }
+
+  .mobile-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--panel-border);
+    box-shadow: 0 -8px 24px rgba(11, 11, 12, 0.08);
+    transition: transform 0.25s ease;
+  }
+
+  .mobile-cta--hidden {
+    transform: translateY(110%);
+  }
+
+  .mobile-cta .btn {
+    padding: 14px 16px;
+    font-size: 0.98rem;
+  }
+
+  .mobile-cta .btn--dark {
+    flex: 1;
+    box-shadow: none;
   }
 }
 
 @media (max-width: 480px) {
-  .trust-banner {
-    border-radius: 10px;
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  .main-title {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
+  .topbar__inner {
+    padding-top: 14px;
+    padding-bottom: 14px;
   }
 
-  .banner-subtitle {
-    font-size: 0.9rem;
+  .brand-logo {
+    height: 46px;
   }
 
-  .banner-content {
-    padding: 2em 1em;
-  }
-
-  .benefits-grid {
-    gap: 15px;
-  }
-
-  .benefit-card {
-    padding: 15px;
-  }
-
-  .benefit-card h3 {
-    font-size: 1rem;
-  }
-
-  .subpage-content {
-    padding: 1em;
-  }
-
-  .section-heading {
-    font-size: 1.3rem;
-  }
-
-  .faq-title {
-    font-size: 0.95rem;
-  }
-
-  .faq-text {
+  .topbar__phone {
+    padding: 9px 13px;
     font-size: 0.85rem;
   }
 
-  .contact-choice {
-    padding: 25px 20px;
+  .trust-strip__list {
+    grid-template-columns: 1fr;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
 
-  .choice-intro {
+  .hero__title {
+    font-size: 1.75rem;
+  }
+
+  .deadline {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px;
+  }
+
+  .deadline__unit {
+    flex: 1;
+  }
+
+  .hero__lead {
+    font-size: 1rem;
+  }
+
+  .form-card {
+    padding: 24px 18px 20px;
+  }
+
+  .section-heading {
+    font-size: 1.5rem;
+  }
+
+  .process__title {
+    font-size: 1.6rem;
+  }
+
+  .bill {
+    padding: 18px;
+  }
+
+  .packages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .package__fit {
+    min-height: 0;
+  }
+
+  .estimate__stats,
+  .package-includes__list {
+    grid-template-columns: 1fr;
+  }
+
+  .estimate__title {
     font-size: 1.1rem;
   }
+
+  .process-steps {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .step-number {
+    font-size: 2rem;
+  }
+
 }
 </style>
