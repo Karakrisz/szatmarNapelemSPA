@@ -55,11 +55,6 @@ export default defineNuxtConfig({
     '@nuxtjs/sitemap',
   ],
 
-  // A képek generáláskor készülnek el statikus fájlként (így a Vercel képoptimalizálója nem számláz)
-  image: {
-    provider: 'ipxStatic',
-  },
-
   site: {
     url: 'https://napelem-tamogatassal.szatmarnapelem.hu/',
     trailingSlash: true,
