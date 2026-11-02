@@ -1775,7 +1775,7 @@ function buildDashboard_() {
 
   sh.setRowHeight(1, 52)
   sh.getRange('A1:N1').setBackground(ink)
-  sh.getRange('B1:M1').merge().setValue('SZATMÁR SOLAR  ·  KIVITELEZÉSEK ÁTTEKINTÉS').setFontFamily(font).setFontSize(16).setFontWeight('bold').setFontColor(BRAND_.cream)
+  sh.getRange('B1:M1').merge().setValue('SZATMÁR SOLAR ONE  ·  ÁTTEKINTÉS').setFontFamily(font).setFontSize(16).setFontWeight('bold').setFontColor(BRAND_.cream)
   sh.setRowHeight(2, 5)
   sh.getRange('A2:N2').setBackground(accent)
   sh.setRowHeight(3, 14)

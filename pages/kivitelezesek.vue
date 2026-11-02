@@ -16,7 +16,7 @@ import {
 } from '~/composables/useKivitelezesek'
 
 useHead({
-  title: 'Kivitelezések | Szatmár Solar',
+  title: 'Szatmár Solar One',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' },
     { name: 'theme-color', content: '#155b9b' },
@@ -506,8 +506,8 @@ async function saveService() {
       <!-- ===== BELÉPÉS ===== -->
       <div v-if="!auth.pin" class="login">
         <img src="/icon-192.png" alt="" class="login-logo" />
-        <div class="login-title">Kivitelezések</div>
-        <div class="login-sub">Szatmár Solar belső felület</div>
+        <div class="login-title">Szatmár Solar One</div>
+        <div class="login-sub">Ajánlat, szerződés, kivitelezés – egy helyen</div>
         <form class="card" @submit.prevent="login">
           <label class="field">
             <span>Neved</span>
@@ -994,7 +994,7 @@ async function saveService() {
           <div class="brand">
             <img src="/icon-192.png" alt="" />
             <div>
-              <div class="t1">Kivitelezések</div>
+              <div class="t1">Szatmár Solar One</div>
               <div class="t2">Szia, {{ auth.user }}!</div>
             </div>
           </div>
