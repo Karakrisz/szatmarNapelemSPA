@@ -39,7 +39,7 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
         { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
         { rel: 'manifest', href: '/site.webmanifest' },
-        { rel: 'canonical', href: 'https://csempe.burkololapoutlet.hu/' },
+        { rel: 'canonical', href: 'https://napelem-tamogatassal.szatmarnapelem.hu/' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com' },
         {
@@ -55,9 +55,34 @@ export default defineNuxtConfig({
     '@nuxtjs/sitemap',
   ],
 
+  // A képek generáláskor készülnek el statikus fájlként (így a Vercel képoptimalizálója nem számláz)
+  image: {
+    provider: 'ipxStatic',
+  },
+
   site: {
-    url: 'https://sos.letavillanyszereles.hu/',
+    url: 'https://napelem-tamogatassal.szatmarnapelem.hu/',
     trailingSlash: true,
+  },
+
+  // Belső kivitelezés-kezelő (/kivitelezesek): ne kerüljön a sitemapbe, de generáláskor készüljön el
+  sitemap: {
+    exclude: ['/kivitelezesek/**', '/kivitelezesek'],
+  },
+
+  nitro: {
+    prerender: {
+      routes: ['/kivitelezesek'],
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      // A Google Apps Script webalkalmazás URL-je (google-apps-script/README.md)
+      kivApiUrl:
+        process.env.NUXT_PUBLIC_KIV_API_URL ||
+        'https://script.google.com/macros/s/AKfycbw7hadRl--o90hZtiInanij_gOBEiJJPAgB8Ip6KngIxWsY1tjzzvutnW0ob92EpV1X/exec',
+    },
   },
 
   compatibilityDate: '2025-01-21',

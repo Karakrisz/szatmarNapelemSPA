@@ -1,6 +1,6 @@
 <script setup>
 // Megosztási előnézet (Facebook, Messenger, Viber, iMessage, X stb.)
-const { origin } = useRequestURL()
+const origin = 'https://napelem-tamogatassal.szatmarnapelem.hu'
 const shareTitle = 'Szatmár Solar – Csökkentse a villanyszámláját saját árammal'
 const shareDescription =
   'Napelemes rendszer és energiatárolás kulcsrakészen. Ingyenes, kötelezettségmentes helyszíni felmérés és megtakarítás-kalkuláció.'
